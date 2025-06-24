@@ -20,3 +20,21 @@ Features to be implemented:
 - when the last puzzle is done, display the score summmary
 
 That's it for now, we'll see for more features later.
+
+## Dependency management with `uv`
+
+This project now uses [`uv`](https://github.com/astral-sh/uv) to manage Python
+dependencies. `uv` is a drop-in replacement for `pip` written in Rust that
+provides much faster installs. To set up the environment:
+
+1. [Install `uv`](https://github.com/astral-sh/uv#installation) (for example by
+   running `curl -Ls https://astral.sh/uv/install.sh | sh`).
+2. Create a virtual environment with `uv venv`.
+3. Install the backend requirements:
+
+   ```bash
+   uv pip install -r backend/requirements.txt
+   ```
+
+With the dependencies installed you can run the backend as described in
+`backend/README.md`.

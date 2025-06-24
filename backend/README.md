@@ -5,7 +5,8 @@ This directory contains the FastAPI application. It uses SQLite as a simple stor
 Run the development server with:
 
 ```bash
-pip install -r requirements.txt
+# install dependencies using uv
+uv pip install -r requirements.txt
 uvicorn app.main:app --reload
 ```
 
