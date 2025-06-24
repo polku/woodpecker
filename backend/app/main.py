@@ -6,10 +6,15 @@ app = FastAPI(title="Woodpecker API")
 
 # In-memory placeholders
 PUZZLE_SETS = [
-    PuzzleSet(id=1, name="Intro", description="Mate in one")
+    PuzzleSet(id=1, name="Intro", description="Mate in one"),
 ]
+
 PUZZLES = [
-    Puzzle(id=42, puzzle_set_id=1, fen="8/8/8/8/8/8/8/8 w - - 0 1", moves_count=1)
+    Puzzle(id=42, puzzle_set_id=1, fen="7k/5K2/6Q1/8/8/8/8/8 w - - 0 1", moves_count=1),
+    Puzzle(id=43, puzzle_set_id=1, fen="k7/8/8/7Q/8/8/8/K7 w - - 0 1", moves_count=1),
+    Puzzle(id=44, puzzle_set_id=1, fen="6k1/5ppp/8/8/8/8/5PPP/6K1 w - - 0 1", moves_count=1),
+    Puzzle(id=45, puzzle_set_id=1, fen="8/8/8/2k5/2P5/2K5/8/8 w - - 0 1", moves_count=1),
+    Puzzle(id=46, puzzle_set_id=1, fen="rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1", moves_count=1),
 ]
 
 SESSIONS = {}
