@@ -52,9 +52,7 @@ Start a new training session with a puzzle set.
     "id": 42,
     "fen": "...",
     "moves_count": 3,
-    "initial_move": "e7e5",
-    "index": 1,
-    "total": 10
+    "initial_move": "e7e5"
   },
   "score": 0,
   "elapsed_seconds": 0
@@ -70,9 +68,7 @@ Fetch the current puzzle for the session.
   "id": 42,
   "fen": "...",
   "moves_count": 3,
-  "initial_move": "e7e5",
-  "index": 5,
-  "total": 10
+  "initial_move": "e7e5"
 }
 ```
 

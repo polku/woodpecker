@@ -14,11 +14,6 @@ class Puzzle(BaseModel):
     initial_move: Optional[str] = None
 
 
-class PuzzleProgress(Puzzle):
-    """Puzzle information along with progress data."""
-
-    index: int
-    total: int
 
 class MoveRequest(BaseModel):
     move: str
