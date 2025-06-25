@@ -1,5 +1,6 @@
 from fastapi import FastAPI, HTTPException
 from typing import List
+from datetime import datetime
 from pathlib import Path
 import csv
 
@@ -38,6 +39,7 @@ def load_puzzles():
 PUZZLES, PUZZLE_SOLUTIONS = load_puzzles()
 
 SESSIONS = {}
+LAST_RUNS = {}
 
 @app.get("/api/puzzle_sets", response_model=List[PuzzleSet])
 def list_puzzle_sets():
@@ -49,7 +51,15 @@ def start_session(data: dict):
     if not puzzle_set_id:
         raise HTTPException(status_code=400, detail="puzzle_set_id required")
     session_id = f"s{len(SESSIONS)+1}"
-    SESSIONS[session_id] = {"index": 0, "score": 0, "move_index": 1}
+    attempts = LAST_RUNS.get(puzzle_set_id, {}).get("attempts", 0) + 1
+    SESSIONS[session_id] = {
+        "index": 0,
+        "score": 0,
+        "move_index": 1,
+        "start": datetime.utcnow(),
+        "puzzle_set_id": puzzle_set_id,
+        "attempts": attempts,
+    }
     puzzle = PUZZLES[0]
     first_move = PUZZLE_SOLUTIONS[puzzle.id][0]
     puzzle = puzzle.copy(update={"initial_move": first_move})
@@ -115,4 +125,19 @@ def summary(session_id: str):
     if session_id not in SESSIONS:
         raise HTTPException(status_code=404, detail="session not found")
     session = SESSIONS[session_id]
-    return SessionSummary(score=session["score"], elapsed_seconds=0)
+    elapsed = int((datetime.utcnow() - session["start"]).total_seconds())
+    puzzle_set_id = session["puzzle_set_id"]
+    last = LAST_RUNS.get(puzzle_set_id)
+    summary = SessionSummary(
+        score=session["score"],
+        elapsed_seconds=elapsed,
+        attempts=session["attempts"],
+        previous_score=last.get("score") if last else None,
+        previous_elapsed_seconds=last.get("elapsed_seconds") if last else None,
+    )
+    LAST_RUNS[puzzle_set_id] = {
+        "score": session["score"],
+        "elapsed_seconds": elapsed,
+        "attempts": session["attempts"],
+    }
+    return summary

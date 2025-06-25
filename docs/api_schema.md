@@ -79,11 +79,17 @@ Submit the next move for the current puzzle.
 If `puzzle_solved` becomes `true`, the next call to `GET /api/sessions/{session_id}/puzzle` returns the next puzzle or `null` when finished.
 
 ### `GET /api/sessions/{session_id}/summary`
-Return final score and timing once the session ends.
+Return final score, elapsed time and progress information once the session ends.
 
 **Response 200**
 ```json
-{"score": 7, "elapsed_seconds": 300}
+{
+  "score": 7,
+  "elapsed_seconds": 300,
+  "attempts": 3,
+  "previous_score": 5,
+  "previous_elapsed_seconds": 420
+}
 ```
 
 ## Notes

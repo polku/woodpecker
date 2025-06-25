@@ -26,3 +26,6 @@ class MoveResult(BaseModel):
 class SessionSummary(BaseModel):
     score: int
     elapsed_seconds: int
+    attempts: int
+    previous_score: Optional[int] = None
+    previous_elapsed_seconds: Optional[int] = None
