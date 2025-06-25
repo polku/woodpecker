@@ -52,7 +52,7 @@ def start_session(data: dict):
     SESSIONS[session_id] = {"index": 0, "score": 0, "move_index": 1}
     puzzle = PUZZLES[0]
     first_move = PUZZLE_SOLUTIONS[puzzle.id][0]
-    puzzle = Puzzle(**puzzle.dict(), initial_move=first_move)
+    puzzle = puzzle.copy(update={"initial_move": first_move})
     return {
         "id": session_id,
         "puzzle": puzzle,
@@ -70,7 +70,8 @@ def get_puzzle(session_id: str):
     puzzle = PUZZLES[session["index"]]
     first_move = PUZZLE_SOLUTIONS[puzzle.id][0]
     session["move_index"] = 1
-    return Puzzle(**puzzle.dict(), initial_move=first_move)
+    return puzzle.copy(update={"initial_move": first_move})
+  
 
 @app.post("/api/sessions/{session_id}/move", response_model=MoveResult)
 def submit_move(session_id: str, move: MoveRequest):
