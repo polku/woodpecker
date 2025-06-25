@@ -26,8 +26,16 @@ function ArrowOverlay({ move, boardWidth, orientation }) {
       style={{ position: 'absolute', top: 0, left: 0, pointerEvents: 'none' }}
     >
       <defs>
-        <marker id="arrowhead" markerWidth="10" markerHeight="7" refX="0" refY="3.5" orient="auto">
-          <polygon points="-10 0, 0 3.5, -10 7" fill="red" />
+        <marker
+          id="arrowhead"
+          viewBox="0 0 10 10"
+          refX="5"
+          refY="5"
+          markerWidth="6"
+          markerHeight="6"
+          orient="auto"
+        >
+          <path d="M 0 0 L 10 5 L 0 10 z" fill="red" />
         </marker>
       </defs>
       <line x1={x1} y1={y1} x2={x2} y2={y2} stroke="red" strokeWidth="4" markerEnd="url(#arrowhead)" />
