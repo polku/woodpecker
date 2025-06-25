@@ -50,6 +50,7 @@ function App() {
   const [showSolution, setShowSolution] = useState(false);
   const [solutionMoves, setSolutionMoves] = useState([]);
   const [solutionIndex, setSolutionIndex] = useState(0);
+  const [puzzleSolved, setPuzzleSolved] = useState(false);
 
   const orientationFromFen = fen =>
     fen.split(' ')[1] === 'w' ? 'white' : 'black';
@@ -84,9 +85,11 @@ function App() {
     setElapsed(res.data.elapsed_seconds);
     setChess(new Chess(res.data.puzzle.fen));
     setBoardOrientation(orientationFromFen(res.data.puzzle.fen));
+    setPuzzleSolved(false);
   };
 
   const fetchNextPuzzle = async () => {
+    setPuzzleSolved(false);
     const res = await axios.get(`/api/sessions/${session}/puzzle`);
     if (res.data) {
       setPuzzle(res.data);
@@ -158,7 +161,7 @@ function App() {
     }
 
     if (res.data.puzzle_solved) {
-      await fetchNextPuzzle();
+      setPuzzleSolved(true);
     }
 
     return true;
@@ -201,8 +204,8 @@ function App() {
             boardWidth={boardWidth}
             position={chess.fen()}
             boardOrientation={boardOrientation}
-            onPieceDrop={showSolution ? undefined : onDrop}
-            arePiecesDraggable={!showSolution}
+            onPieceDrop={showSolution || puzzleSolved ? undefined : onDrop}
+            arePiecesDraggable={!showSolution && !puzzleSolved}
           />
           {showSolution && (
             <ArrowOverlay
@@ -218,6 +221,12 @@ function App() {
           <button onClick={stepBackward} disabled={solutionIndex === 0}>{'<'}</button>
           <div style={{ margin: '0.5rem 0' }}>{solutionIndex}/{solutionMoves.length}</div>
           <button onClick={stepForward} disabled={solutionIndex === solutionMoves.length}>{'>'}</button>
+          <button onClick={fetchNextPuzzle} style={{ marginTop: '1rem' }}>Next Puzzle</button>
+        </div>
+      )}
+      {puzzleSolved && !showSolution && (
+        <div style={{ marginLeft: '1rem', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+          <div style={{ color: 'green', fontWeight: 'bold' }}>Correct!</div>
           <button onClick={fetchNextPuzzle} style={{ marginTop: '1rem' }}>Next Puzzle</button>
         </div>
       )}
