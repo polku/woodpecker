@@ -1,0 +1,10 @@
+PuzzleId,FEN,Moves,Rating,Themes
+00Au2,r5r1/pp2kp2/2p5/3pQ3/3P4/2NB4/PPP2q2/1K6 b - - 1 28,e7d7 d3f5 f2f5 e5f5,1048,advantage endgame short
+00C7m,8/5k2/1P4R1/6PK/1r6/8/8/8 w - - 1 58,h5h6 b4h4,749,endgame mate mateIn1 oneMove rookEndgame
+00Ea3,3r4/p5k1/1p1qprnp/1Q1pN1p1/3P1pP1/1PP5/P5PP/4RRK1 b - - 3 29,g6e5 d4e5 d6c5 b5c5 b6c5 e5f6,1317,crushing fork long middlegame
+00MIY,6k1/3R3p/1p5q/3P4/3QP1pN/6P1/PPr3B1/5rK1 w - - 0 25,g1f1 h6c1 d4d1 c1d1,1500,endgame mate mateIn2 short
+008Y3,r5k1/1p1rqpp1/p3pnp1/2PN4/8/1Q5P/PP3PP1/3RR1K1 b - - 0 24,e7c5 d5f6 g7f6 d1d7,1062,advantage discoveredAttack kingsideAttack master middlegame short
+00VFK,8/6pk/7p/Q7/6P1/3q3K/1P5P/8 w - - 1 45,h3h4 g7g5 a5g5 h6g5,1014,crushing endgame master queenEndgame short
+000o3,8/2p1k3/6p1/1p1P1p2/1P3P2/3K2Pp/7P/8 b - - 1 43,e7d6 d3d4 g6g5 f4g5,892,crushing endgame pawnEndgame short zugzwang
+00ft3,8/p7/2R3p1/4Nnk1/2P4p/7K/Pr6/8 b - - 3 50,g5f4 e5d3 f4g5 d3b2,1264,crushing endgame fork short
+00Gyu,r1b1k1nr/1pp2p2/p7/1B1q3p/6p1/4PP2/PPPQ1P2/2KR3R b kq - 1 17,d5b5 d2d8,574,mate mateIn1 middlegame oneMove
