@@ -208,11 +208,35 @@ function App() {
   };
 
   if (summary) {
+    const scoreDiff =
+      summary.previous_score !== null && summary.previous_score !== undefined
+        ? summary.score - summary.previous_score
+        : null;
+    const timeDiff =
+      summary.previous_elapsed_seconds !== null &&
+      summary.previous_elapsed_seconds !== undefined
+        ? summary.previous_elapsed_seconds - summary.elapsed_seconds
+        : null;
     return (
       <div style={{ padding: '1rem' }}>
         <h2>Session Summary</h2>
+        <p>Attempt: {summary.attempts}</p>
         <p>Score: {summary.score}</p>
         <p>Time: {summary.elapsed_seconds}s</p>
+        {summary.previous_score != null && (
+          <p>
+            Previous score: {summary.previous_score} ({scoreDiff >= 0 ? '+' : ''}
+            {scoreDiff})
+          </p>
+        )}
+        {summary.previous_elapsed_seconds != null && (
+          <p>
+            Previous time: {summary.previous_elapsed_seconds}s ({timeDiff >= 0
+              ? '-'
+              : '+'}
+            {Math.abs(timeDiff)}s)
+          </p>
+        )}
       </div>
     );
   }
