@@ -51,6 +51,7 @@ function App() {
   const [solutionMoves, setSolutionMoves] = useState([]);
   const [solutionIndex, setSolutionIndex] = useState(0);
   const [puzzleSolved, setPuzzleSolved] = useState(false);
+  const [lastMove, setLastMove] = useState(null);
 
   // After loading a puzzle we automatically play the first move from the
   // solution. Orientation should therefore be for the side that moves second.
@@ -85,13 +86,21 @@ function App() {
     setPuzzle(res.data.puzzle);
     setScore(res.data.score);
     setElapsed(res.data.elapsed_seconds);
-    const c = new Chess(res.data.puzzle.fen);
-    if (res.data.puzzle.initial_move) {
-      c.move(res.data.puzzle.initial_move);
-    }
+    const baseFen = res.data.puzzle.fen;
+    const c = new Chess(baseFen);
     setChess(c);
-    setBoardOrientation(orientationFromFen(res.data.puzzle.fen));
+    setBoardOrientation(orientationFromFen(baseFen));
     setPuzzleSolved(false);
+    setLastMove(null);
+    if (res.data.puzzle.initial_move) {
+      const moveStr = res.data.puzzle.initial_move;
+      setTimeout(() => {
+        const c2 = new Chess(baseFen);
+        c2.move(moveStr);
+        setChess(c2);
+        setLastMove({ from: moveStr.slice(0, 2), to: moveStr.slice(2, 4) });
+      }, 500);
+    }
   };
 
   const fetchNextPuzzle = async () => {
@@ -99,15 +108,23 @@ function App() {
     const res = await axios.get(`/api/sessions/${session}/puzzle`);
     if (res.data) {
       setPuzzle(res.data);
-      const c = new Chess(res.data.fen);
-      if (res.data.initial_move) {
-        c.move(res.data.initial_move);
-      }
+      const baseFen = res.data.fen;
+      const c = new Chess(baseFen);
       setChess(c);
-      setBoardOrientation(orientationFromFen(res.data.fen));
+      setBoardOrientation(orientationFromFen(baseFen));
       setShowSolution(false);
       setSolutionMoves([]);
       setSolutionIndex(0);
+      setLastMove(null);
+      if (res.data.initial_move) {
+        const moveStr = res.data.initial_move;
+        setTimeout(() => {
+          const c2 = new Chess(baseFen);
+          c2.move(moveStr);
+          setChess(c2);
+          setLastMove({ from: moveStr.slice(0, 2), to: moveStr.slice(2, 4) });
+        }, 500);
+      }
     } else {
       const summaryRes = await axios.get(`/api/sessions/${session}/summary`);
       setSummary(summaryRes.data);
@@ -120,6 +137,10 @@ function App() {
     const c = new Chess(chess.fen());
     c.move(solutionMoves[solutionIndex]);
     setChess(c);
+    setLastMove({
+      from: solutionMoves[solutionIndex].slice(0, 2),
+      to: solutionMoves[solutionIndex].slice(2, 4)
+    });
     setSolutionIndex(solutionIndex + 1);
   };
 
@@ -130,7 +151,14 @@ function App() {
       c.move(solutionMoves[i]);
     }
     setChess(c);
-    setSolutionIndex(solutionIndex - 1);
+    const newIndex = solutionIndex - 1;
+    if (newIndex > 0) {
+      const mv = solutionMoves[newIndex - 1];
+      setLastMove({ from: mv.slice(0, 2), to: mv.slice(2, 4) });
+    } else {
+      setLastMove(null);
+    }
+    setSolutionIndex(newIndex);
   };
 
   useEffect(() => {
@@ -147,6 +175,7 @@ function App() {
     const move = chess.move({ from: sourceSquare, to: targetSquare, promotion: 'q' });
     if (move === null) return false;
     setChess(new Chess(chess.fen()));
+    setLastMove({ from: sourceSquare, to: targetSquare });
 
     const res = await axios.post(`/api/sessions/${session}/move`, { move: `${sourceSquare}${targetSquare}` });
     setScore(res.data.score);
@@ -168,6 +197,7 @@ function App() {
       const c = new Chess(chess.fen());
       c.move(res.data.next_move);
       setChess(c);
+      setLastMove({ from: res.data.next_move.slice(0, 2), to: res.data.next_move.slice(2, 4) });
     }
 
     if (res.data.puzzle_solved) {
@@ -216,6 +246,18 @@ function App() {
             boardOrientation={boardOrientation}
             onPieceDrop={showSolution || puzzleSolved ? undefined : onDrop}
             arePiecesDraggable={!showSolution && !puzzleSolved}
+            customSquareStyles={
+              lastMove
+                ? {
+                    [lastMove.from]: {
+                      boxShadow: 'inset 0 0 0 4px rgba(0,255,0,0.6)'
+                    },
+                    [lastMove.to]: {
+                      boxShadow: 'inset 0 0 0 4px rgba(0,255,0,0.6)'
+                    }
+                  }
+                : {}
+            }
           />
           {showSolution && (
             <ArrowOverlay
