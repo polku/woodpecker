@@ -48,7 +48,6 @@ def make_puzzle_progress(puzzle: Puzzle, index: int) -> PuzzleProgress:
     first_move = PUZZLE_SOLUTIONS[puzzle.id][0]
     return PuzzleProgress(
         **puzzle.dict(),
-        initial_move=first_move,
         index=index + 1,
         total=len(PUZZLES),
     )
@@ -96,7 +95,7 @@ def get_puzzle(session_id: str):
     puzzle = PUZZLES[session["index"]]
     session["move_index"] = 1
     return make_puzzle_progress(puzzle, session["index"])
-  
+
 
 @app.post("/api/sessions/{session_id}/move", response_model=MoveResult)
 def submit_move(session_id: str, move: MoveRequest):
