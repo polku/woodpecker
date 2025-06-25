@@ -13,6 +13,15 @@ function App() {
   const [elapsed, setElapsed] = useState(0);
   const [timerId, setTimerId] = useState(null);
   const [summary, setSummary] = useState(null);
+  const [boardWidth, setBoardWidth] = useState(Math.min(480, window.innerWidth - 20));
+
+  useEffect(() => {
+    const handleResize = () => {
+      setBoardWidth(Math.min(480, window.innerWidth - 20));
+    };
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
 
   // Fetch puzzle sets on load
   useEffect(() => {
@@ -101,9 +110,10 @@ function App() {
   return (
     <div style={{ padding: '1rem' }}>
       <div style={{ marginBottom: '1rem' }}>
-        <span>Score: {score}</span> | <span>Time: {elapsed}s</span>
+        <span>Score: {score}</span> | <span>Time: {elapsed}s</span> |
+        <span>{chess.turn() === 'w' ? 'White' : 'Black'} to move</span>
       </div>
-      <Chessboard position={chess.fen()} onPieceDrop={onDrop} />
+      <Chessboard boardWidth={boardWidth} position={chess.fen()} onPieceDrop={onDrop} />
     </div>
   );
 }
