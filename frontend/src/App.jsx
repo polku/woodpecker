@@ -53,6 +53,7 @@ function App() {
   const [elapsed, setElapsed] = useState(0);
   const [timerId, setTimerId] = useState(null);
   const [summary, setSummary] = useState(null);
+  const [performances, setPerformances] = useState([]);
   const [boardWidth, setBoardWidth] = useState(Math.min(480, window.innerWidth - 20));
   const [boardOrientation, setBoardOrientation] = useState('white');
   const [showSolution, setShowSolution] = useState(false);
@@ -96,6 +97,12 @@ function App() {
     }
     return () => timerId && clearInterval(timerId);
   }, [session, timerId]);
+
+  useEffect(() => {
+    if (summary) {
+      axios.get('/api/performances').then(r => setPerformances(r.data));
+    }
+  }, [summary]);
 
   const startSession = async () => {
     const res = await axios.post('/api/sessions', { puzzle_set_id: parseInt(selectedSet) });
@@ -144,11 +151,13 @@ function App() {
           setLastMove({ from: moveStr.slice(0, 2), to: moveStr.slice(2, 4) });
         }, 500);
       }
-    } else {
-      const summaryRes = await axios.get(`/api/sessions/${session}/summary`);
-      setSummary(summaryRes.data);
-      clearInterval(timerId);
-    }
+      } else {
+        const summaryRes = await axios.get(`/api/sessions/${session}/summary`);
+        setSummary(summaryRes.data);
+        const perfRes = await axios.get('/api/performances');
+        setPerformances(perfRes.data);
+        clearInterval(timerId);
+      }
   };
 
   const stepForward = () => {
@@ -256,28 +265,56 @@ function App() {
       summary.previous_elapsed_seconds !== undefined
         ? summary.previous_elapsed_seconds - summary.elapsed_seconds
         : null;
-    return (
-      <div style={{ padding: '1rem' }}>
-        <h2>Session Summary</h2>
-        <p>Attempt: {summary.attempts}</p>
-        <p>Score: {summary.score}</p>
-        <p>Time: {summary.elapsed_seconds}s</p>
-        {summary.previous_score != null && (
-          <p>
-            Previous score: {summary.previous_score} ({scoreDiff >= 0 ? '+' : ''}
-            {scoreDiff})
-          </p>
-        )}
-        {summary.previous_elapsed_seconds != null && (
-          <p>
-            Previous time: {summary.previous_elapsed_seconds}s ({timeDiff >= 0
-              ? '-'
-              : '+'}
-            {Math.abs(timeDiff)}s)
-          </p>
-        )}
-      </div>
-    );
+      return (
+        <div style={{ padding: '1rem' }}>
+          <h2>Session Summary</h2>
+          <p>Attempt: {summary.attempts}</p>
+          <p>Score: {summary.score}</p>
+          <p>Time: {summary.elapsed_seconds}s</p>
+          {summary.previous_score != null && (
+            <p>
+              Previous score: {summary.previous_score} ({scoreDiff >= 0 ? '+' : ''}
+              {scoreDiff})
+            </p>
+          )}
+          {summary.previous_elapsed_seconds != null && (
+            <p>
+              Previous time: {summary.previous_elapsed_seconds}s ({timeDiff >= 0
+                ? '-'
+                : '+'}
+              {Math.abs(timeDiff)}s)
+            </p>
+          )}
+          {performances.length > 0 && (
+            <div style={{ marginTop: '1rem' }}>
+              <h3>Past Performances</h3>
+              <table>
+                <thead>
+                  <tr>
+                    <th>Date</th>
+                    <th>Set</th>
+                    <th>Score</th>
+                    <th>Time</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {performances.map(p => (
+                    <tr
+                      key={p.id}
+                      style={p.id === summary.performance_id ? { fontWeight: 'bold' } : {}}
+                    >
+                      <td>{new Date(p.date).toLocaleString()}</td>
+                      <td>{p.puzzle_set}</td>
+                      <td>{p.score}</td>
+                      <td>{p.elapsed_seconds}s</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </div>
+      );
   }
 
   if (!session) {

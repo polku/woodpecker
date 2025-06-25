@@ -25,9 +25,17 @@ class MoveResult(BaseModel):
     next_move: Optional[str] = None
     solution: Optional[List[str]] = None
 
+class Performance(BaseModel):
+    id: str
+    puzzle_set: str
+    score: int
+    elapsed_seconds: int
+    date: str
+
 class SessionSummary(BaseModel):
     score: int
     elapsed_seconds: int
     attempts: int
     previous_score: Optional[int] = None
     previous_elapsed_seconds: Optional[int] = None
+    performance_id: str

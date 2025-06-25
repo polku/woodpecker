@@ -1,6 +1,9 @@
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Depends
 from typing import List
 from datetime import datetime
+from sqlalchemy.orm import Session
+
+from .database import SessionLocal, Base, engine, Performance
 from pathlib import Path
 import csv
 
@@ -10,9 +13,21 @@ from .models import (
     MoveRequest,
     MoveResult,
     SessionSummary,
+    Performance as PerformanceModel,
 )
 
 app = FastAPI(title="Woodpecker API")
+
+# Initialize database tables
+Base.metadata.create_all(bind=engine)
+
+
+def get_db():
+    db = SessionLocal()
+    try:
+        yield db
+    finally:
+        db.close()
 
 # In-memory placeholders
 PUZZLE_SETS = [
@@ -130,19 +145,30 @@ def submit_move(session_id: str, move: MoveRequest):
         return MoveResult(correct=False, puzzle_solved=False, score=session["score"], solution=solution)
 
 @app.get("/api/sessions/{session_id}/summary", response_model=SessionSummary)
-def summary(session_id: str):
+def summary(session_id: str, db: Session = Depends(get_db)):
     if session_id not in SESSIONS:
         raise HTTPException(status_code=404, detail="session not found")
     session = SESSIONS[session_id]
     elapsed = int((datetime.utcnow() - session["start"]).total_seconds())
     puzzle_set_id = session["puzzle_set_id"]
     last = LAST_RUNS.get(puzzle_set_id)
+    puzzle_set_name = next(ps.name for ps in PUZZLE_SETS if ps.id == puzzle_set_id)
+    perf = Performance(
+        puzzle_set=puzzle_set_name,
+        score=session["score"],
+        elapsed_seconds=elapsed,
+    )
+    db.add(perf)
+    db.commit()
+    db.refresh(perf)
+
     summary = SessionSummary(
         score=session["score"],
         elapsed_seconds=elapsed,
         attempts=session["attempts"],
         previous_score=last.get("score") if last else None,
         previous_elapsed_seconds=last.get("elapsed_seconds") if last else None,
+        performance_id=perf.id,
     )
     LAST_RUNS[puzzle_set_id] = {
         "score": session["score"],
@@ -150,3 +176,18 @@ def summary(session_id: str):
         "attempts": session["attempts"],
     }
     return summary
+
+
+@app.get("/api/performances", response_model=List[PerformanceModel])
+def list_performances(db: Session = Depends(get_db)):
+    records = db.query(Performance).order_by(Performance.date.desc()).all()
+    return [
+        PerformanceModel(
+            id=r.id,
+            puzzle_set=r.puzzle_set,
+            score=r.score,
+            elapsed_seconds=r.elapsed_seconds,
+            date=r.date.isoformat(),
+        )
+        for r in records
+    ]

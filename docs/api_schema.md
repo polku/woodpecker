@@ -24,6 +24,13 @@ This document describes the REST API that the React frontend and FastAPI backend
 - `score` (integer)
 - `elapsed_seconds` (integer)
 
+### Performance
+- `id` (string): unique identifier
+- `puzzle_set` (string): name of the puzzle set
+- `score` (integer)
+- `elapsed_seconds` (integer)
+- `date` (ISO 8601 timestamp)
+
 ## Endpoints
 
 ### `GET /api/puzzle_sets`
@@ -103,8 +110,25 @@ Return final score, elapsed time and progress information once the session ends.
   "elapsed_seconds": 300,
   "attempts": 3,
   "previous_score": 5,
-  "previous_elapsed_seconds": 420
+  "previous_elapsed_seconds": 420,
+  "performance_id": "uuid"
 }
+```
+
+### `GET /api/performances`
+List stored session performances ordered from newest to oldest.
+
+**Response 200**
+```json
+[
+  {
+    "id": "uuid",
+    "puzzle_set": "Intro",
+    "score": 7,
+    "elapsed_seconds": 300,
+    "date": "2024-05-11T15:00:00Z"
+  }
+]
 ```
 
 ## Notes
