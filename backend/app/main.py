@@ -76,15 +76,25 @@ def submit_move(session_id: str, move: MoveRequest):
 
     if move.move == expected:
         move_idx += 1
-        session["move_index"] = move_idx
+        next_move = None
         if move_idx == len(solution):
             session["score"] += 1
             session["index"] += 1
             session["move_index"] = 0
             puzzle_solved = True
         else:
-            puzzle_solved = False
-        return MoveResult(correct=True, puzzle_solved=puzzle_solved, score=session["score"])
+            # autoplay opponent move
+            next_move = solution[move_idx]
+            move_idx += 1
+            if move_idx == len(solution):
+                session["score"] += 1
+                session["index"] += 1
+                session["move_index"] = 0
+                puzzle_solved = True
+            else:
+                session["move_index"] = move_idx
+                puzzle_solved = False
+        return MoveResult(correct=True, puzzle_solved=puzzle_solved, score=session["score"], next_move=next_move)
     else:
         # Wrong answer: reveal solution and move to next puzzle
         session["index"] += 1

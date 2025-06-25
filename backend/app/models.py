@@ -19,6 +19,7 @@ class MoveResult(BaseModel):
     correct: bool
     puzzle_solved: bool
     score: int
+    next_move: Optional[str] = None
     solution: Optional[List[str]] = None
 
 class SessionSummary(BaseModel):
