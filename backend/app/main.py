@@ -79,7 +79,7 @@ def start_session(data: dict):
         "elapsed_seconds": 0,
     }
 
-@app.get("/api/sessions/{session_id}/puzzle", response_model=Puzzle)
+@app.get("/api/sessions/{session_id}/puzzle", response_model=Puzzle | None)
 def get_puzzle(session_id: str):
     if session_id not in SESSIONS:
         raise HTTPException(status_code=404, detail="session not found")
