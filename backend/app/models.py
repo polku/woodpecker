@@ -11,6 +11,7 @@ class Puzzle(BaseModel):
     puzzle_set_id: int
     fen: str
     moves_count: int
+    initial_move: Optional[str] = None
 
 class MoveRequest(BaseModel):
     move: str
