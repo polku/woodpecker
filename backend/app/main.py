@@ -3,9 +3,15 @@ from typing import List
 from datetime import datetime
 from sqlalchemy.orm import Session
 
-from .database import SessionLocal, Base, engine, Performance
-from pathlib import Path
-import csv
+from .database import (
+    SessionLocal,
+    Base,
+    engine,
+    Performance,
+    PuzzleDB,
+    PuzzleSetDB,
+    puzzle_set_puzzles,
+)
 
 from .models import (
     PuzzleSet,
@@ -29,51 +35,46 @@ def get_db():
     finally:
         db.close()
 
-# In-memory placeholders
-PUZZLE_SETS = [
-    PuzzleSet(id=1, name="Intro", description="Mate in one"),
-]
 
-
-def load_puzzles():
-    """Load puzzles from the demo.csv file."""
-    puzzles = []
-    solutions = {}
-    csv_path = Path(__file__).resolve().parent.parent / "demo.csv"
-    with csv_path.open(newline="") as f:
-        reader = csv.DictReader(f)
-        for idx, row in enumerate(reader, start=1):
-            fen = row["FEN"]
-            moves = row["Moves"].split()
-            puzzles.append(
-                Puzzle(
-                    id=idx,
-                    puzzle_set_id=1,
-                    fen=fen,
-                    moves_count=len(moves),
-                )
-            )
-            solutions[idx] = moves
-    return puzzles, solutions
-
-
-
-
-
-PUZZLES, PUZZLE_SOLUTIONS = load_puzzles()
 
 SESSIONS = {}
 LAST_RUNS = {}
 
 @app.get("/api/puzzle_sets", response_model=List[PuzzleSet])
-def list_puzzle_sets():
-    return PUZZLE_SETS
+def list_puzzle_sets(db: Session = Depends(get_db)):
+    records = db.query(PuzzleSetDB).order_by(PuzzleSetDB.id).all()
+    return [PuzzleSet(id=r.id, name=r.name, description=r.description) for r in records]
 
 @app.post("/api/sessions", status_code=201)
-def start_session(data: dict):
+def start_session(data: dict, db: Session = Depends(get_db)):
     puzzle_set_id = data.get("puzzle_set_id")
     if not puzzle_set_id:
         raise HTTPException(status_code=400, detail="puzzle_set_id required")
+
+    puzzle_records = (
+        db.query(PuzzleDB)
+        .join(puzzle_set_puzzles, PuzzleDB.id == puzzle_set_puzzles.c.puzzle_id)
+        .filter(puzzle_set_puzzles.c.puzzle_set_id == puzzle_set_id)
+        .order_by(PuzzleDB.id)
+        .all()
+    )
+    if not puzzle_records:
+        raise HTTPException(status_code=404, detail="puzzle set not found")
+
+    puzzles = []
+    solutions = {}
+    for p in puzzle_records:
+        moves = p.moves.split()
+        puzzles.append(
+            Puzzle(
+                id=p.id,
+                puzzle_set_id=puzzle_set_id,
+                fen=p.fen,
+                moves_count=len(moves),
+            )
+        )
+        solutions[p.id] = moves
+
     session_id = f"s{len(SESSIONS)+1}"
     attempts = LAST_RUNS.get(puzzle_set_id, {}).get("attempts", 0) + 1
     SESSIONS[session_id] = {
@@ -83,9 +84,11 @@ def start_session(data: dict):
         "start": datetime.utcnow(),
         "puzzle_set_id": puzzle_set_id,
         "attempts": attempts,
+        "puzzles": puzzles,
+        "solutions": solutions,
     }
-    puzzle = PUZZLES[0]
-    first_move = PUZZLE_SOLUTIONS[puzzle.id][0]
+    puzzle = puzzles[0]
+    first_move = solutions[puzzle.id][0]
     puzzle = puzzle.copy(update={"initial_move": first_move})
     return {
         "id": session_id,
@@ -99,10 +102,12 @@ def get_puzzle(session_id: str):
     if session_id not in SESSIONS:
         raise HTTPException(status_code=404, detail="session not found")
     session = SESSIONS[session_id]
-    if session["index"] >= len(PUZZLES):
+    puzzles = session["puzzles"]
+    solutions = session["solutions"]
+    if session["index"] >= len(puzzles):
         return None
-    puzzle = PUZZLES[session["index"]]
-    first_move = PUZZLE_SOLUTIONS[puzzle.id][0]
+    puzzle = puzzles[session["index"]]
+    first_move = solutions[puzzle.id][0]
     session["move_index"] = 1
     return puzzle.copy(update={"initial_move": first_move})
 
@@ -112,8 +117,10 @@ def submit_move(session_id: str, move: MoveRequest):
     if session_id not in SESSIONS:
         raise HTTPException(status_code=404, detail="session not found")
     session = SESSIONS[session_id]
-    puzzle = PUZZLES[session["index"]]
-    solution = PUZZLE_SOLUTIONS[puzzle.id]
+    puzzles = session["puzzles"]
+    solutions = session["solutions"]
+    puzzle = puzzles[session["index"]]
+    solution = solutions[puzzle.id]
     move_idx = session.get("move_index", 0)
     expected = solution[move_idx]
 
@@ -152,7 +159,8 @@ def summary(session_id: str, db: Session = Depends(get_db)):
     elapsed = int((datetime.utcnow() - session["start"]).total_seconds())
     puzzle_set_id = session["puzzle_set_id"]
     last = LAST_RUNS.get(puzzle_set_id)
-    puzzle_set_name = next(ps.name for ps in PUZZLE_SETS if ps.id == puzzle_set_id)
+    ps = db.query(PuzzleSetDB).filter(PuzzleSetDB.id == puzzle_set_id).first()
+    puzzle_set_name = ps.name if ps else str(puzzle_set_id)
     perf = Performance(
         puzzle_set=puzzle_set_name,
         score=session["score"],
