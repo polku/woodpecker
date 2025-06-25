@@ -52,6 +52,7 @@ function App() {
   const [solutionIndex, setSolutionIndex] = useState(0);
   const [puzzleSolved, setPuzzleSolved] = useState(false);
   const [lastMove, setLastMove] = useState(null);
+  const [incorrect, setIncorrect] = useState(false);
 
   // After loading a puzzle we automatically play the first move from the
   // solution. Orientation should therefore be for the side that moves second.
@@ -100,6 +101,7 @@ function App() {
     setBoardOrientation(orientationFromFen(baseFen));
     setPuzzleSolved(false);
     setLastMove(null);
+    setIncorrect(false);
     if (res.data.puzzle.initial_move) {
       const moveStr = res.data.puzzle.initial_move;
       setTimeout(() => {
@@ -113,6 +115,7 @@ function App() {
 
   const fetchNextPuzzle = async () => {
     setPuzzleSolved(false);
+    setIncorrect(false);
     const res = await axios.get(`/api/sessions/${session}/puzzle`);
     if (res.data) {
       setPuzzle(res.data);
@@ -194,7 +197,7 @@ function App() {
     setScore(res.data.score);
 
     if (!res.data.correct) {
-      alert('Incorrect!');
+      setIncorrect(true);
       if (res.data.solution) {
         setShowSolution(true);
         let moves = res.data.solution;
@@ -218,6 +221,8 @@ function App() {
       }
       return true;
     }
+
+    setIncorrect(false);
 
     if (res.data.next_move) {
       const c = new Chess(chess.fen());
@@ -322,6 +327,7 @@ function App() {
         </div>
       {showSolution && (
         <div style={{ marginLeft: '1rem', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+          {incorrect && <div style={{ color: 'red', fontWeight: 'bold' }}>Incorrect!</div>}
           <button onClick={stepBackward} disabled={solutionIndex === 0}>{'<'}</button>
           <div style={{ margin: '0.5rem 0' }}>{solutionIndex}/{solutionMoves.length}</div>
           <button onClick={stepForward} disabled={solutionIndex === solutionMoves.length}>{'>'}</button>
