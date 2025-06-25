@@ -58,6 +58,14 @@ function App() {
   const orientationFromFen = fen =>
     fen.split(' ')[1] === 'w' ? 'black' : 'white';
 
+  const puzzleStartFen = pz => {
+    if (!pz) return '';
+    if (!pz.initial_move) return pz.fen;
+    const c = new Chess(pz.fen);
+    c.move(pz.initial_move);
+    return c.fen();
+  };
+
   useEffect(() => {
     const handleResize = () => {
       setBoardWidth(Math.min(480, window.innerWidth - 20));
@@ -146,7 +154,7 @@ function App() {
 
   const stepBackward = () => {
     if (solutionIndex === 0) return;
-    const c = new Chess(puzzle.fen);
+    const c = new Chess(puzzleStartFen(puzzle));
     for (let i = 0; i < solutionIndex - 1; i++) {
       c.move(solutionMoves[i]);
     }
@@ -155,6 +163,11 @@ function App() {
     if (newIndex > 0) {
       const mv = solutionMoves[newIndex - 1];
       setLastMove({ from: mv.slice(0, 2), to: mv.slice(2, 4) });
+    } else if (puzzle.initial_move) {
+      setLastMove({
+        from: puzzle.initial_move.slice(0, 2),
+        to: puzzle.initial_move.slice(2, 4)
+      });
     } else {
       setLastMove(null);
     }
@@ -186,7 +199,16 @@ function App() {
         setShowSolution(true);
         setSolutionMoves(res.data.solution);
         setSolutionIndex(0);
-        setChess(new Chess(puzzle.fen));
+        const startFen = puzzleStartFen(puzzle);
+        setChess(new Chess(startFen));
+        if (puzzle.initial_move) {
+          setLastMove({
+            from: puzzle.initial_move.slice(0, 2),
+            to: puzzle.initial_move.slice(2, 4)
+          });
+        } else {
+          setLastMove(null);
+        }
       } else {
         await fetchNextPuzzle();
       }
