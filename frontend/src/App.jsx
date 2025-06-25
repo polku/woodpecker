@@ -282,8 +282,7 @@ function App() {
     <div style={{ padding: '1rem', display: 'flex' }}>
       <div>
         <div style={{ marginBottom: '1rem' }}>
-          <span>Score: {score}</span> | <span>Time: {elapsed}s</span> |
-          <span>{chess.turn() === 'w' ? 'White' : 'Black'} to move</span>
+          <span>Score: {score}</span> | <span>Time: {elapsed}s</span>
         </div>
         <div style={{ position: 'relative', width: boardWidth }}>
           <Chessboard
@@ -312,8 +311,11 @@ function App() {
               orientation={boardOrientation}
             />
           )}
+          </div>
+          <div style={{ marginTop: '1rem' }}>
+            {chess.turn() === 'w' ? 'White' : 'Black'} to move
+          </div>
         </div>
-      </div>
       {showSolution && (
         <div style={{ marginLeft: '1rem', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
           <button onClick={stepBackward} disabled={solutionIndex === 0}>{'<'}</button>
