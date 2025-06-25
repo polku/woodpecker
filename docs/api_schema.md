@@ -14,6 +14,8 @@ This document describes the REST API that the React frontend and FastAPI backend
 - `puzzle_set_id` (integer): ID of the set it belongs to
 - `fen` (string): board position in FEN notation
 - `moves_count` (integer): number of moves in the solution
+- `initial_move` (string, optional): move automatically played before the user
+  moves
 
 ### Session
 - `id` (string): unique session identifier
@@ -44,7 +46,7 @@ Start a new training session with a puzzle set.
 
 **Response 201**
 ```json
-{"id": "abc123", "puzzle": {"id": 42, "fen": "...", "moves_count": 3}, "score": 0, "elapsed_seconds": 0}
+{"id": "abc123", "puzzle": {"id": 42, "fen": "...", "moves_count": 3, "initial_move": "e7e5"}, "score": 0, "elapsed_seconds": 0}
 ```
 
 ### `GET /api/sessions/{session_id}/puzzle`
@@ -52,7 +54,7 @@ Fetch the current puzzle for the session.
 
 **Response 200**
 ```json
-{"id": 42, "fen": "...", "moves_count": 3}
+{"id": 42, "fen": "...", "moves_count": 3, "initial_move": "e7e5"}
 ```
 
 ### `POST /api/sessions/{session_id}/move`
@@ -87,5 +89,7 @@ Return final score and timing once the session ends.
 ## Notes
 - All timestamps use ISO 8601 format (UTC).
 - Moves are in UCI format (`e2e4`). The frontend should convert from chessboard clicks to this format.
+- The first move in each puzzle is played automatically by the backend. The
+  client should apply the `initial_move` before allowing the user to move.
 - Authentication is not yet implemented; sessions are anonymous.
 - The schema may evolve but should remain backward compatible when possible.
