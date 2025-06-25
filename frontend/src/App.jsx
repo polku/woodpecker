@@ -287,7 +287,7 @@ function App() {
           {performances.length > 0 && (
             <div style={{ marginTop: '1rem' }}>
               <h3>Past Performances</h3>
-              <table>
+              <table className="performance-table">
                 <thead>
                   <tr>
                     <th>Date</th>
@@ -302,7 +302,7 @@ function App() {
                       key={p.id}
                       style={p.id === summary.performance_id ? { fontWeight: 'bold' } : {}}
                     >
-                      <td>{new Date(p.date).toLocaleString()}</td>
+                      <td>{new Date(p.date).toISOString()}</td>
                       <td>{p.puzzle_set}</td>
                       <td>{p.score}</td>
                       <td>{p.elapsed_seconds}s</td>
@@ -330,7 +330,7 @@ function App() {
         {performances.length > 0 && (
           <div style={{ marginTop: '1rem' }}>
             <h3>Past Performances</h3>
-            <table>
+            <table className="performance-table">
               <thead>
                 <tr>
                   <th>Date</th>
@@ -342,7 +342,7 @@ function App() {
               <tbody>
                 {performances.map(p => (
                   <tr key={p.id}>
-                    <td>{new Date(p.date).toLocaleString()}</td>
+                    <td>{new Date(p.date).toISOString()}</td>
                     <td>{p.puzzle_set}</td>
                     <td>{p.score}</td>
                     <td>{p.elapsed_seconds}s</td>
