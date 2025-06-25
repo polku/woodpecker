@@ -3,17 +3,22 @@ import axios from 'axios';
 import { Chess } from 'chess.js';
 import { Chessboard } from 'react-chessboard';
 
-function ArrowOverlay({ move, boardWidth }) {
+function ArrowOverlay({ move, boardWidth, orientation }) {
   if (!move) return null;
   const squareSize = boardWidth / 8;
   const fromFile = move.slice(0, 1).charCodeAt(0) - 'a'.charCodeAt(0);
   const fromRank = parseInt(move[1], 10) - 1;
   const toFile = move.slice(2, 3).charCodeAt(0) - 'a'.charCodeAt(0);
   const toRank = parseInt(move[3], 10) - 1;
-  const x1 = (fromFile + 0.5) * squareSize;
-  const y1 = boardWidth - (fromRank + 0.5) * squareSize;
-  const x2 = (toFile + 0.5) * squareSize;
-  const y2 = boardWidth - (toRank + 0.5) * squareSize;
+  const isWhite = orientation === 'white';
+  const fileToX = f =>
+    isWhite ? (f + 0.5) * squareSize : boardWidth - (f + 0.5) * squareSize;
+  const rankToY = r =>
+    isWhite ? boardWidth - (r + 0.5) * squareSize : (r + 0.5) * squareSize;
+  const x1 = fileToX(fromFile);
+  const y1 = rankToY(fromRank);
+  const x2 = fileToX(toFile);
+  const y2 = rankToY(toRank);
   return (
     <svg
       width={boardWidth}
@@ -41,9 +46,13 @@ function App() {
   const [timerId, setTimerId] = useState(null);
   const [summary, setSummary] = useState(null);
   const [boardWidth, setBoardWidth] = useState(Math.min(480, window.innerWidth - 20));
+  const [boardOrientation, setBoardOrientation] = useState('white');
   const [showSolution, setShowSolution] = useState(false);
   const [solutionMoves, setSolutionMoves] = useState([]);
   const [solutionIndex, setSolutionIndex] = useState(0);
+
+  const orientationFromFen = fen =>
+    fen.split(' ')[1] === 'w' ? 'white' : 'black';
 
   useEffect(() => {
     const handleResize = () => {
@@ -74,6 +83,7 @@ function App() {
     setScore(res.data.score);
     setElapsed(res.data.elapsed_seconds);
     setChess(new Chess(res.data.puzzle.fen));
+    setBoardOrientation(orientationFromFen(res.data.puzzle.fen));
   };
 
   const fetchNextPuzzle = async () => {
@@ -81,6 +91,7 @@ function App() {
     if (res.data) {
       setPuzzle(res.data);
       setChess(new Chess(res.data.fen));
+      setBoardOrientation(orientationFromFen(res.data.fen));
       setShowSolution(false);
       setSolutionMoves([]);
       setSolutionIndex(0);
@@ -183,6 +194,7 @@ function App() {
           <Chessboard
             boardWidth={boardWidth}
             position={chess.fen()}
+            boardOrientation={boardOrientation}
             onPieceDrop={showSolution ? undefined : onDrop}
             arePiecesDraggable={!showSolution}
           />
@@ -190,6 +202,7 @@ function App() {
             <ArrowOverlay
               move={solutionIndex < solutionMoves.length ? solutionMoves[solutionIndex] : null}
               boardWidth={boardWidth}
+              orientation={boardOrientation}
             />
           )}
         </div>
