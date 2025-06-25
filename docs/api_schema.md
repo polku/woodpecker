@@ -65,8 +65,9 @@ Submit the next move for the current puzzle.
 
 **Response 200** (correct move)
 ```json
-{"correct": true, "puzzle_solved": false, "score": 1}
+{"correct": true, "puzzle_solved": false, "score": 1, "next_move": "e7e5"}
 ```
+`next_move` contains the automatically played reply when the puzzle is not yet solved.
 
 **Response 200** (incorrect move)
 ```json

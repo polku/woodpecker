@@ -151,6 +151,12 @@ function App() {
       return true;
     }
 
+    if (res.data.next_move) {
+      const c = new Chess(chess.fen());
+      c.move(res.data.next_move);
+      setChess(c);
+    }
+
     if (res.data.puzzle_solved) {
       await fetchNextPuzzle();
     }
