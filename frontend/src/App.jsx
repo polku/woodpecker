@@ -27,7 +27,7 @@ function ArrowOverlay({ move, boardWidth, orientation }) {
     >
       <defs>
         <marker id="arrowhead" markerWidth="10" markerHeight="7" refX="0" refY="3.5" orient="auto">
-          <polygon points="0 0, 10 3.5, 0 7" fill="red" />
+          <polygon points="-10 0, 0 3.5, -10 7" fill="red" />
         </marker>
       </defs>
       <line x1={x1} y1={y1} x2={x2} y2={y2} stroke="red" strokeWidth="4" markerEnd="url(#arrowhead)" />
