@@ -197,7 +197,11 @@ function App() {
       alert('Incorrect!');
       if (res.data.solution) {
         setShowSolution(true);
-        setSolutionMoves(res.data.solution);
+        let moves = res.data.solution;
+        if (puzzle.initial_move && moves[0] === puzzle.initial_move) {
+          moves = moves.slice(1);
+        }
+        setSolutionMoves(moves);
         setSolutionIndex(0);
         const startFen = puzzleStartFen(puzzle);
         setChess(new Chess(startFen));
