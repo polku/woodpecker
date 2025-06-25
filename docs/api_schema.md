@@ -46,7 +46,19 @@ Start a new training session with a puzzle set.
 
 **Response 201**
 ```json
-{"id": "abc123", "puzzle": {"id": 42, "fen": "...", "moves_count": 3, "initial_move": "e7e5"}, "score": 0, "elapsed_seconds": 0}
+{
+  "id": "abc123",
+  "puzzle": {
+    "id": 42,
+    "fen": "...",
+    "moves_count": 3,
+    "initial_move": "e7e5",
+    "index": 1,
+    "total": 10
+  },
+  "score": 0,
+  "elapsed_seconds": 0
+}
 ```
 
 ### `GET /api/sessions/{session_id}/puzzle`
@@ -54,7 +66,14 @@ Fetch the current puzzle for the session.
 
 **Response 200**
 ```json
-{"id": 42, "fen": "...", "moves_count": 3, "initial_move": "e7e5"}
+{
+  "id": 42,
+  "fen": "...",
+  "moves_count": 3,
+  "initial_move": "e7e5",
+  "index": 5,
+  "total": 10
+}
 ```
 
 ### `POST /api/sessions/{session_id}/move`

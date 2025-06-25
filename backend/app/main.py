@@ -4,7 +4,14 @@ from datetime import datetime
 from pathlib import Path
 import csv
 
-from .models import PuzzleSet, Puzzle, MoveRequest, MoveResult, SessionSummary
+from .models import (
+    PuzzleSet,
+    Puzzle,
+    PuzzleProgress,
+    MoveRequest,
+    MoveResult,
+    SessionSummary,
+)
 
 app = FastAPI(title="Woodpecker API")
 
@@ -36,6 +43,17 @@ def load_puzzles():
     return puzzles, solutions
 
 
+def make_puzzle_progress(puzzle: Puzzle, index: int) -> PuzzleProgress:
+    """Return PuzzleProgress including initial move and progress info."""
+    first_move = PUZZLE_SOLUTIONS[puzzle.id][0]
+    return PuzzleProgress(
+        **puzzle.dict(),
+        initial_move=first_move,
+        index=index + 1,
+        total=len(PUZZLES),
+    )
+
+
 PUZZLES, PUZZLE_SOLUTIONS = load_puzzles()
 
 SESSIONS = {}
@@ -60,9 +78,7 @@ def start_session(data: dict):
         "puzzle_set_id": puzzle_set_id,
         "attempts": attempts,
     }
-    puzzle = PUZZLES[0]
-    first_move = PUZZLE_SOLUTIONS[puzzle.id][0]
-    puzzle = puzzle.copy(update={"initial_move": first_move})
+    puzzle = make_puzzle_progress(PUZZLES[0], 0)
     return {
         "id": session_id,
         "puzzle": puzzle,
@@ -70,7 +86,7 @@ def start_session(data: dict):
         "elapsed_seconds": 0,
     }
 
-@app.get("/api/sessions/{session_id}/puzzle", response_model=Puzzle)
+@app.get("/api/sessions/{session_id}/puzzle", response_model=PuzzleProgress | None)
 def get_puzzle(session_id: str):
     if session_id not in SESSIONS:
         raise HTTPException(status_code=404, detail="session not found")
@@ -78,9 +94,8 @@ def get_puzzle(session_id: str):
     if session["index"] >= len(PUZZLES):
         return None
     puzzle = PUZZLES[session["index"]]
-    first_move = PUZZLE_SOLUTIONS[puzzle.id][0]
     session["move_index"] = 1
-    return puzzle.copy(update={"initial_move": first_move})
+    return make_puzzle_progress(puzzle, session["index"])
   
 
 @app.post("/api/sessions/{session_id}/move", response_model=MoveResult)

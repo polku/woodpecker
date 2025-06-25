@@ -52,6 +52,8 @@ function App() {
   const [solutionIndex, setSolutionIndex] = useState(0);
   const [puzzleSolved, setPuzzleSolved] = useState(false);
   const [lastMove, setLastMove] = useState(null);
+  const [progressIndex, setProgressIndex] = useState(0);
+  const [progressTotal, setProgressTotal] = useState(0);
 
   // After loading a puzzle we automatically play the first move from the
   // solution. Orientation should therefore be for the side that moves second.
@@ -92,6 +94,8 @@ function App() {
     const res = await axios.post('/api/sessions', { puzzle_set_id: parseInt(selectedSet) });
     setSession(res.data.id);
     setPuzzle(res.data.puzzle);
+    setProgressIndex(res.data.puzzle.index);
+    setProgressTotal(res.data.puzzle.total);
     setScore(res.data.score);
     setElapsed(res.data.elapsed_seconds);
     const baseFen = res.data.puzzle.fen;
@@ -116,6 +120,8 @@ function App() {
     const res = await axios.get(`/api/sessions/${session}/puzzle`);
     if (res.data) {
       setPuzzle(res.data);
+      setProgressIndex(res.data.index);
+      setProgressTotal(res.data.total);
       const baseFen = res.data.fen;
       const c = new Chess(baseFen);
       setChess(c);
@@ -283,6 +289,7 @@ function App() {
       <div>
         <div style={{ marginBottom: '1rem' }}>
           <span>Score: {score}</span> | <span>Time: {elapsed}s</span> |
+          <span>Puzzle {progressIndex}/{progressTotal}</span> |
           <span>{chess.turn() === 'w' ? 'White' : 'Black'} to move</span>
         </div>
         <div style={{ position: 'relative', width: boardWidth }}>
