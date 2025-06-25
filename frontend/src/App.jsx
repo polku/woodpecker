@@ -52,8 +52,10 @@ function App() {
   const [solutionIndex, setSolutionIndex] = useState(0);
   const [puzzleSolved, setPuzzleSolved] = useState(false);
 
+  // After loading a puzzle we automatically play the first move from the
+  // solution. Orientation should therefore be for the side that moves second.
   const orientationFromFen = fen =>
-    fen.split(' ')[1] === 'w' ? 'white' : 'black';
+    fen.split(' ')[1] === 'w' ? 'black' : 'white';
 
   useEffect(() => {
     const handleResize = () => {
@@ -83,7 +85,11 @@ function App() {
     setPuzzle(res.data.puzzle);
     setScore(res.data.score);
     setElapsed(res.data.elapsed_seconds);
-    setChess(new Chess(res.data.puzzle.fen));
+    const c = new Chess(res.data.puzzle.fen);
+    if (res.data.puzzle.initial_move) {
+      c.move(res.data.puzzle.initial_move);
+    }
+    setChess(c);
     setBoardOrientation(orientationFromFen(res.data.puzzle.fen));
     setPuzzleSolved(false);
   };
@@ -93,7 +99,11 @@ function App() {
     const res = await axios.get(`/api/sessions/${session}/puzzle`);
     if (res.data) {
       setPuzzle(res.data);
-      setChess(new Chess(res.data.fen));
+      const c = new Chess(res.data.fen);
+      if (res.data.initial_move) {
+        c.move(res.data.initial_move);
+      }
+      setChess(c);
       setBoardOrientation(orientationFromFen(res.data.fen));
       setShowSolution(false);
       setSolutionMoves([]);

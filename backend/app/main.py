@@ -49,8 +49,10 @@ def start_session(data: dict):
     if not puzzle_set_id:
         raise HTTPException(status_code=400, detail="puzzle_set_id required")
     session_id = f"s{len(SESSIONS)+1}"
-    SESSIONS[session_id] = {"index": 0, "score": 0, "move_index": 0}
+    SESSIONS[session_id] = {"index": 0, "score": 0, "move_index": 1}
     puzzle = PUZZLES[0]
+    first_move = PUZZLE_SOLUTIONS[puzzle.id][0]
+    puzzle = Puzzle(**puzzle.dict(), initial_move=first_move)
     return {
         "id": session_id,
         "puzzle": puzzle,
@@ -62,7 +64,13 @@ def start_session(data: dict):
 def get_puzzle(session_id: str):
     if session_id not in SESSIONS:
         raise HTTPException(status_code=404, detail="session not found")
-    return PUZZLES[SESSIONS[session_id]["index"]]
+    session = SESSIONS[session_id]
+    if session["index"] >= len(PUZZLES):
+        return None
+    puzzle = PUZZLES[session["index"]]
+    first_move = PUZZLE_SOLUTIONS[puzzle.id][0]
+    session["move_index"] = 1
+    return Puzzle(**puzzle.dict(), initial_move=first_move)
 
 @app.post("/api/sessions/{session_id}/move", response_model=MoveResult)
 def submit_move(session_id: str, move: MoveRequest):
