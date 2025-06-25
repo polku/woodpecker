@@ -98,10 +98,9 @@ function App() {
     return () => timerId && clearInterval(timerId);
   }, [session, timerId]);
 
+  // Fetch past performances on load and whenever the summary changes
   useEffect(() => {
-    if (summary) {
-      axios.get('/api/performances').then(r => setPerformances(r.data));
-    }
+    axios.get('/api/performances').then(r => setPerformances(r.data));
   }, [summary]);
 
   const startSession = async () => {
@@ -328,6 +327,31 @@ function App() {
           ))}
         </select>
         <button onClick={startSession} disabled={!selectedSet}>Start</button>
+        {performances.length > 0 && (
+          <div style={{ marginTop: '1rem' }}>
+            <h3>Past Performances</h3>
+            <table>
+              <thead>
+                <tr>
+                  <th>Date</th>
+                  <th>Set</th>
+                  <th>Score</th>
+                  <th>Time</th>
+                </tr>
+              </thead>
+              <tbody>
+                {performances.map(p => (
+                  <tr key={p.id}>
+                    <td>{new Date(p.date).toLocaleString()}</td>
+                    <td>{p.puzzle_set}</td>
+                    <td>{p.score}</td>
+                    <td>{p.elapsed_seconds}s</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
       </div>
     );
   }
