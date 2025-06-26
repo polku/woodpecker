@@ -362,37 +362,59 @@ function App() {
         <div style={{ marginBottom: '1rem' }}>
           <span>Score: {score}</span> | <span>Time: {elapsed}s</span>
         </div>
-        <div style={{ position: 'relative', width: boardWidth }}>
-          <Chessboard
-            boardWidth={boardWidth}
-            position={chess.fen()}
-            boardOrientation={boardOrientation}
-            onPieceDrop={showSolution || puzzleSolved ? undefined : onDrop}
-            arePiecesDraggable={!showSolution && !puzzleSolved}
-            customSquareStyles={
-              lastMove
-                ? {
-                    [lastMove.from]: {
-                      boxShadow: 'inset 0 0 0 4px rgba(0,255,0,0.6)'
-                    },
-                    [lastMove.to]: {
-                      boxShadow: 'inset 0 0 0 4px rgba(0,255,0,0.6)'
-                    }
-                  }
-                : {}
-            }
-          />
-          {showSolution && (
-            <ArrowOverlay
-              move={solutionIndex < solutionMoves.length ? solutionMoves[solutionIndex] : null}
+        <div style={{ display: 'flex', alignItems: 'center' }}>
+          <div style={{ position: 'relative', width: boardWidth }}>
+            <Chessboard
               boardWidth={boardWidth}
-              orientation={boardOrientation}
+              position={chess.fen()}
+              boardOrientation={boardOrientation}
+              onPieceDrop={showSolution || puzzleSolved ? undefined : onDrop}
+              arePiecesDraggable={!showSolution && !puzzleSolved}
+              customSquareStyles={
+                lastMove
+                  ? {
+                      [lastMove.from]: {
+                        boxShadow: 'inset 0 0 0 4px rgba(0,255,0,0.6)'
+                      },
+                      [lastMove.to]: {
+                        boxShadow: 'inset 0 0 0 4px rgba(0,255,0,0.6)'
+                      }
+                    }
+                  : {}
+              }
             />
-          )}
+            {showSolution && (
+              <ArrowOverlay
+                move={solutionIndex < solutionMoves.length ? solutionMoves[solutionIndex] : null}
+                boardWidth={boardWidth}
+                orientation={boardOrientation}
+              />
+            )}
           </div>
-          <div style={{ marginTop: '1rem' }}>
-            {chess.turn() === 'w' ? 'White' : 'Black'} to move
+          <div
+            style={{
+              marginLeft: '1rem',
+              backgroundColor: '#333',
+              padding: '0.5rem 1rem',
+              borderRadius: '4px',
+              display: 'flex',
+              alignItems: 'center'
+            }}
+          >
+            <div
+              style={{
+                width: '40px',
+                height: '40px',
+                backgroundColor: chess.turn() === 'w' ? '#fff' : '#000',
+                border: '1px solid #eee',
+                marginRight: '0.5rem'
+              }}
+            ></div>
+            <div style={{ fontSize: '1.2rem', fontWeight: 'bold' }}>
+              {chess.turn() === 'w' ? 'White' : 'Black'} to move
+            </div>
           </div>
+        </div>
         </div>
       {showSolution && (
         <div style={{ marginLeft: '1rem', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
