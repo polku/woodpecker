@@ -203,6 +203,16 @@ function App() {
     return () => window.removeEventListener('keydown', handleKey);
   }, [showSolution, solutionIndex, solutionMoves, chess, puzzle]);
 
+  useEffect(() => {
+    const handleEnter = e => {
+      if (e.key === "Enter" && (puzzleSolved || showSolution)) {
+        fetchNextPuzzle();
+      }
+    };
+    window.addEventListener("keydown", handleEnter);
+    return () => window.removeEventListener("keydown", handleEnter);
+  }, [puzzleSolved, showSolution]);
+
   const onDrop = async (sourceSquare, targetSquare) => {
     const move = chess.move({ from: sourceSquare, to: targetSquare, promotion: 'q' });
     if (move === null) return false;
@@ -362,53 +372,91 @@ function App() {
         <div style={{ marginBottom: '1rem' }}>
           <span>Score: {score}</span> | <span>Time: {elapsed}s</span>
         </div>
-        <div style={{ position: 'relative', width: boardWidth }}>
-          <Chessboard
-            boardWidth={boardWidth}
-            position={chess.fen()}
-            boardOrientation={boardOrientation}
-            onPieceDrop={showSolution || puzzleSolved ? undefined : onDrop}
-            arePiecesDraggable={!showSolution && !puzzleSolved}
-            customSquareStyles={
-              lastMove
-                ? {
-                    [lastMove.from]: {
-                      boxShadow: 'inset 0 0 0 4px rgba(0,255,0,0.6)'
-                    },
-                    [lastMove.to]: {
-                      boxShadow: 'inset 0 0 0 4px rgba(0,255,0,0.6)'
-                    }
-                  }
-                : {}
-            }
-          />
-          {showSolution && (
-            <ArrowOverlay
-              move={solutionIndex < solutionMoves.length ? solutionMoves[solutionIndex] : null}
+        <div style={{ display: 'flex', alignItems: 'flex-start' }}>
+          <div style={{ position: 'relative', width: boardWidth }}>
+            <Chessboard
               boardWidth={boardWidth}
-              orientation={boardOrientation}
+              position={chess.fen()}
+              boardOrientation={boardOrientation}
+              onPieceDrop={showSolution || puzzleSolved ? undefined : onDrop}
+              arePiecesDraggable={!showSolution && !puzzleSolved}
+              customSquareStyles={
+                lastMove
+                  ? {
+                      [lastMove.from]: {
+                        boxShadow: 'inset 0 0 0 4px rgba(0,255,0,0.6)'
+                      },
+                      [lastMove.to]: {
+                        boxShadow: 'inset 0 0 0 4px rgba(0,255,0,0.6)'
+                      }
+                    }
+                  : {}
+              }
             />
-          )}
+            {showSolution && (
+              <ArrowOverlay
+                move={solutionIndex < solutionMoves.length ? solutionMoves[solutionIndex] : null}
+                boardWidth={boardWidth}
+                orientation={boardOrientation}
+              />
+            )}
           </div>
-          <div style={{ marginTop: '1rem' }}>
-            {chess.turn() === 'w' ? 'White' : 'Black'} to move
+          <div
+            style={{
+              marginLeft: '1rem',
+              marginTop: '-1rem',
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center'
+            }}
+          >
+            <div
+              style={{
+                backgroundColor: '#333',
+                padding: '0.5rem 1rem',
+                borderRadius: '4px',
+                display: 'flex',
+                alignItems: 'center'
+              }}
+            >
+              <div
+                style={{
+                  width: '40px',
+                  height: '40px',
+                  backgroundColor: chess.turn() === 'w' ? '#fff' : '#000',
+                  border: '1px solid #eee',
+                  marginRight: '0.5rem'
+                }}
+              ></div>
+              <div style={{ fontSize: '1.2rem', fontWeight: 'bold' }}>
+                {chess.turn() === 'w' ? 'White' : 'Black'} to move
+              </div>
+            </div>
+            {puzzleSolved && !showSolution && (
+              <div style={{ marginTop: '0.5rem', color: 'green', fontWeight: 'bold' }}>
+                Correct!
+              </div>
+            )}
+            {showSolution && (
+              <>
+                {incorrect && (
+                  <div style={{ marginTop: '0.5rem', color: 'red', fontWeight: 'bold' }}>
+                    Incorrect!
+                  </div>
+                )}
+                <button onClick={stepBackward} disabled={solutionIndex === 0}>{'<'}</button>
+                <div style={{ margin: '0.5rem 0' }}>
+                  {solutionIndex}/{solutionMoves.length}
+                </div>
+                <button onClick={stepForward} disabled={solutionIndex === solutionMoves.length}>{'>'}</button>
+              </>
+            )}
+            {(puzzleSolved || showSolution) && (
+              <button onClick={fetchNextPuzzle} style={{ marginTop: '1rem' }}>Next Puzzle</button>
+            )}
           </div>
         </div>
-      {showSolution && (
-        <div style={{ marginLeft: '1rem', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-          {incorrect && <div style={{ color: 'red', fontWeight: 'bold' }}>Incorrect!</div>}
-          <button onClick={stepBackward} disabled={solutionIndex === 0}>{'<'}</button>
-          <div style={{ margin: '0.5rem 0' }}>{solutionIndex}/{solutionMoves.length}</div>
-          <button onClick={stepForward} disabled={solutionIndex === solutionMoves.length}>{'>'}</button>
-          <button onClick={fetchNextPuzzle} style={{ marginTop: '1rem' }}>Next Puzzle</button>
-        </div>
-      )}
-      {puzzleSolved && !showSolution && (
-        <div style={{ marginLeft: '1rem', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-          <div style={{ color: 'green', fontWeight: 'bold' }}>Correct!</div>
-          <button onClick={fetchNextPuzzle} style={{ marginTop: '1rem' }}>Next Puzzle</button>
-        </div>
-      )}
+      </div>
     </div>
   );
 }
