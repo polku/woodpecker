@@ -41,6 +41,11 @@ def get_db():
 SESSIONS = {}
 LAST_RUNS = {}
 
+# Scoring constants
+POINTS_SOLVED_NO_HINT = 2
+POINTS_SOLVED_WITH_HINT = 1
+POINTS_FAILED = -1
+
 @app.get("/api/puzzle_sets", response_model=List[PuzzleSet])
 def list_puzzle_sets(db: Session = Depends(get_db)):
     results = (
@@ -109,6 +114,7 @@ def start_session(data: dict, db: Session = Depends(get_db)):
         "attempts": attempts,
         "puzzles": puzzles,
         "solutions": solutions,
+        "hint_used": False,
     }
     puzzle = puzzles[0]
     first_move = solutions[puzzle.id][0]
@@ -151,18 +157,28 @@ def submit_move(session_id: str, move: MoveRequest):
         move_idx += 1
         next_move = None
         if move_idx == len(solution):
-            session["score"] += 1
+            session["score"] += (
+                POINTS_SOLVED_NO_HINT
+                if not session.get("hint_used")
+                else POINTS_SOLVED_WITH_HINT
+            )
             session["index"] += 1
             session["move_index"] = 0
+            session["hint_used"] = False
             puzzle_solved = True
         else:
             # autoplay opponent move
             next_move = solution[move_idx]
             move_idx += 1
             if move_idx == len(solution):
-                session["score"] += 1
+                session["score"] += (
+                    POINTS_SOLVED_NO_HINT
+                    if not session.get("hint_used")
+                    else POINTS_SOLVED_WITH_HINT
+                )
                 session["index"] += 1
                 session["move_index"] = 0
+                session["hint_used"] = False
                 puzzle_solved = True
             else:
                 session["move_index"] = move_idx
@@ -170,9 +186,31 @@ def submit_move(session_id: str, move: MoveRequest):
         return MoveResult(correct=True, puzzle_solved=puzzle_solved, score=session["score"], next_move=next_move)
     else:
         # Wrong answer: reveal solution and move to next puzzle
+        session["score"] += POINTS_FAILED
         session["index"] += 1
         session["move_index"] = 0
+        session["hint_used"] = False
         return MoveResult(correct=False, puzzle_solved=False, score=session["score"], solution=solution)
+
+
+@app.get("/api/sessions/{session_id}/hint")
+def get_hint(session_id: str):
+    """Return the square of the piece that should be moved next."""
+    if session_id not in SESSIONS:
+        raise HTTPException(status_code=404, detail="session not found")
+    session = SESSIONS[session_id]
+    puzzles = session["puzzles"]
+    solutions = session["solutions"]
+    if session["index"] >= len(puzzles):
+        raise HTTPException(status_code=400, detail="session finished")
+    puzzle = puzzles[session["index"]]
+    move_idx = session.get("move_index", 0)
+    solution = solutions[puzzle.id]
+    if move_idx >= len(solution):
+        raise HTTPException(status_code=400, detail="puzzle solved")
+    session["hint_used"] = True
+    expected = solution[move_idx]
+    return {"square": expected[:2]}
 
 @app.get("/api/sessions/{session_id}/summary", response_model=SessionSummary)
 def summary(session_id: str, db: Session = Depends(get_db)):
