@@ -64,6 +64,8 @@ function App() {
   const [incorrect, setIncorrect] = useState(false);
   const [setSize, setSetSize] = useState(0);
   const [puzzleIndex, setPuzzleIndex] = useState(1);
+  const [hintSquare, setHintSquare] = useState(null);
+  const [hintUsed, setHintUsed] = useState(false);
   const progressPercent = setSize > 0 ? ((puzzleIndex - 1) / setSize) * 100 : 0;
 
   // After loading a puzzle we automatically play the first move from the
@@ -140,6 +142,8 @@ function App() {
   const fetchNextPuzzle = async () => {
     setPuzzleSolved(false);
     setIncorrect(false);
+    setHintSquare(null);
+    setHintUsed(false);
     const res = await axios.get(`/api/sessions/${session}/puzzle`);
     if (res.data) {
       setPuzzleIndex(i => i + 1);
@@ -204,6 +208,13 @@ function App() {
     setSolutionIndex(newIndex);
   };
 
+  const requestHint = async () => {
+    if (hintUsed) return;
+    const res = await axios.get(`/api/sessions/${session}/hint`);
+    setHintSquare(res.data.square);
+    setHintUsed(true);
+  };
+
   useEffect(() => {
     const handleKey = e => {
       if (!showSolution) return;
@@ -229,6 +240,7 @@ function App() {
     if (move === null) return false;
     setChess(new Chess(chess.fen()));
     setLastMove({ from: sourceSquare, to: targetSquare });
+    setHintSquare(null);
 
     const res = await axios.post(`/api/sessions/${session}/move`, { move: `${sourceSquare}${targetSquare}` });
     setScore(res.data.score);
@@ -391,8 +403,8 @@ function App() {
               boardOrientation={boardOrientation}
               onPieceDrop={showSolution || puzzleSolved ? undefined : onDrop}
               arePiecesDraggable={!showSolution && !puzzleSolved}
-              customSquareStyles={
-                lastMove
+              customSquareStyles={{
+                ...(lastMove
                   ? {
                       [lastMove.from]: {
                         boxShadow: 'inset 0 0 0 4px rgba(0,255,0,0.6)'
@@ -401,8 +413,15 @@ function App() {
                         boxShadow: 'inset 0 0 0 4px rgba(0,255,0,0.6)'
                       }
                     }
-                  : {}
-              }
+                  : {}),
+                ...(hintSquare
+                  ? {
+                      [hintSquare]: {
+                        boxShadow: 'inset 0 0 0 4px rgba(0,0,255,0.6)'
+                      }
+                    }
+                  : {})
+              }}
             />
             {showSolution && (
               <ArrowOverlay
@@ -453,6 +472,13 @@ function App() {
                 {chess.turn() === 'w' ? 'White' : 'Black'} to move
               </div>
             </div>
+            <button
+              onClick={requestHint}
+              disabled={hintUsed || showSolution || puzzleSolved}
+              style={{ marginTop: '0.5rem' }}
+            >
+              Hint
+            </button>
             {puzzleSolved && !showSolution && (
               <div style={{ marginTop: '0.5rem', color: 'green', fontWeight: 'bold' }}>
                 Correct!

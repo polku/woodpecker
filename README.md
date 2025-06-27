@@ -8,7 +8,7 @@ General idea
 
 Features to be implemented:
 - choices between different sets of puzzles (some sets are thematic ex endgames)
-- score (+1 for correct -1 for incorrect ) for proposed solutions
+ - score system: +2 when a puzzle is solved without using a hint, +1 when solved after taking a hint and -1 when failed
 - chronometer: the goal is to maximize score and minimize time
 - keep the score and time in memory to see progress
 - the solution to a puzzle can contain several moves

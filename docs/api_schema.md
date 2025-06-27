@@ -90,13 +90,22 @@ Submit the next move for the current puzzle.
 
 **Response 200** (correct move)
 ```json
-{"correct": true, "puzzle_solved": false, "score": 1, "next_move": "e7e5"}
+{"correct": true, "puzzle_solved": false, "score": 2, "next_move": "e7e5"}
 ```
 `next_move` contains the automatically played reply when the puzzle is not yet solved.
 
 **Response 200** (incorrect move)
 ```json
-{"correct": false, "puzzle_solved": false, "score": 0, "solution": ["e2e4", "e7e5"]}
+{"correct": false, "puzzle_solved": false, "score": -1, "solution": ["e2e4", "e7e5"]}
+```
+
+### `GET /api/sessions/{session_id}/hint`
+Request the square of the piece that should be moved next. Using this endpoint
+marks the hint as used for the current puzzle.
+
+**Response 200**
+```json
+{"square": "e2"}
 ```
 
 If `puzzle_solved` becomes `true`, the next call to `GET /api/sessions/{session_id}/puzzle` returns the next puzzle or `null` when finished.
