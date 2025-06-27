@@ -2,6 +2,7 @@ from fastapi import FastAPI, HTTPException, Depends
 from typing import List
 from datetime import datetime
 from sqlalchemy.orm import Session
+from sqlalchemy import func
 
 from .database import (
     SessionLocal,
@@ -42,8 +43,30 @@ LAST_RUNS = {}
 
 @app.get("/api/puzzle_sets", response_model=List[PuzzleSet])
 def list_puzzle_sets(db: Session = Depends(get_db)):
-    records = db.query(PuzzleSetDB).order_by(PuzzleSetDB.id).all()
-    return [PuzzleSet(id=r.id, name=r.name, description=r.description) for r in records]
+    results = (
+        db.query(
+            PuzzleSetDB.id,
+            PuzzleSetDB.name,
+            PuzzleSetDB.description,
+            func.count(puzzle_set_puzzles.c.puzzle_id).label("size"),
+        )
+        .outerjoin(
+            puzzle_set_puzzles,
+            PuzzleSetDB.id == puzzle_set_puzzles.c.puzzle_set_id,
+        )
+        .group_by(PuzzleSetDB.id)
+        .order_by(PuzzleSetDB.id)
+        .all()
+    )
+    return [
+        PuzzleSet(
+            id=r.id,
+            name=r.name,
+            description=r.description,
+            size=r.size,
+        )
+        for r in results
+    ]
 
 @app.post("/api/sessions", status_code=201)
 def start_session(data: dict, db: Session = Depends(get_db)):

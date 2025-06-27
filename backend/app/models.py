@@ -5,6 +5,7 @@ class PuzzleSet(BaseModel):
     id: int
     name: str
     description: Optional[str] = None
+    size: int
 
 class Puzzle(BaseModel):
     id: int

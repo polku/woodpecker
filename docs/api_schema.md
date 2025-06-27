@@ -8,6 +8,7 @@ This document describes the REST API that the React frontend and FastAPI backend
 - `id` (integer): unique identifier
 - `name` (string): display name
 - `description` (string): optional description
+- `size` (integer): number of puzzles in the set
 
 ### Puzzle
 - `id` (integer): unique identifier
@@ -39,7 +40,7 @@ Returns the list of available puzzle sets.
 **Response 200**
 ```json
 [
-  {"id": 1, "name": "Intro", "description": "Mate in one"}
+  {"id": 1, "name": "Intro", "description": "Mate in one", "size": 10}
 ]
 ```
 
