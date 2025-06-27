@@ -62,6 +62,9 @@ function App() {
   const [puzzleSolved, setPuzzleSolved] = useState(false);
   const [lastMove, setLastMove] = useState(null);
   const [incorrect, setIncorrect] = useState(false);
+  const [setSize, setSetSize] = useState(0);
+  const [puzzleIndex, setPuzzleIndex] = useState(1);
+  const progressPercent = setSize > 0 ? ((puzzleIndex - 1) / setSize) * 100 : 0;
 
   // After loading a puzzle we automatically play the first move from the
   // solution. Orientation should therefore be for the side that moves second.
@@ -105,6 +108,13 @@ function App() {
 
   const startSession = async () => {
     const res = await axios.post('/api/sessions', { puzzle_set_id: parseInt(selectedSet) });
+    const currentSet = puzzleSets.find(ps => ps.id === parseInt(selectedSet));
+    if (currentSet && currentSet.size) {
+      setSetSize(currentSet.size);
+    } else {
+      setSetSize(0);
+    }
+    setPuzzleIndex(1);
     setSession(res.data.id);
     setPuzzle(res.data.puzzle);
     setScore(res.data.score);
@@ -132,6 +142,7 @@ function App() {
     setIncorrect(false);
     const res = await axios.get(`/api/sessions/${session}/puzzle`);
     if (res.data) {
+      setPuzzleIndex(i => i + 1);
       setPuzzle(res.data);
       const baseFen = res.data.fen;
       const c = new Chess(baseFen);
@@ -400,6 +411,16 @@ function App() {
                 orientation={boardOrientation}
               />
             )}
+            <div style={{ height: '4px', width: '100%', backgroundColor: '#eee', marginTop: '4px' }}>
+              <div
+                style={{
+                  height: '100%',
+                  width: `${progressPercent}%`,
+                  backgroundColor: 'green',
+                  transition: 'width 0.3s'
+                }}
+              ></div>
+            </div>
           </div>
           <div
             style={{
