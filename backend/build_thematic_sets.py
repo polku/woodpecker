@@ -1,64 +1,63 @@
 #!/usr/bin/env python3
-"""Generate thematic puzzle sets from the lichess database CSV.
+"""Generate themed puzzle sets from ``lichess_db_puzzle.csv``.
 
-This script parses ``lichess_db_puzzle.csv`` (same layout as ``demo.csv``)
-and creates several puzzle sets of 100 puzzles each in ``woodpecker.db``.
-The selected themes are:
-- Mate in 1
-- Mate in 2
-- Mate in 3
-- Endgames
-- Fork tactics
-- Discovered attacks
-
-Running the script also outputs an SQL file containing the corresponding
-INSERT statements so the sets can be recreated later.
+The script filters the dataset by a single theme or opening tag and builds a
+number of puzzle sets from those rows. Each set contains a fixed number of
+puzzles and the data is inserted into ``woodpecker.db``. An accompanying SQL
+file with the ``INSERT`` statements is also written so the data can be imported
+later.
 """
 
 import argparse
 import sqlite3
-from typing import Dict, List, Optional
+from typing import Any
 
 import polars as pl
-
-THEME_GROUPS: Dict[str, List[str]] = {
-    "Mate in 1": ["mateIn1"],
-    "Mate in 2": ["mateIn2"],
-    "Mate in 3": ["mateIn3"],
-    "Endgames": ["endgame"],
-    "Fork tactics": ["fork"],
-    "Discovered attacks": ["discoveredAttack"],
-}
 
 
 def parse_csv(
     csv_path: str,
-    groups: Dict[str, List[str]],
+    token: str,
+    *,
+    num_sets: int,
     count: int = 100,
-    min_rating: Optional[int] = None,
-    max_rating: Optional[int] = None,
-) -> Dict[str, List[dict]]:
-    """Return ``count`` puzzles for each theme group using polars."""
+    min_rating: int | None = None,
+    max_rating: int | None = None,
+    column: str = "Themes",
+) -> dict[str, list[dict[str, Any]]]:
+    """Return ``num_sets`` lists of puzzles filtered by ``token``."""
     df = pl.read_csv(csv_path)
+
+    if column not in df.columns:
+        raise ValueError(f"Column '{column}' not found in CSV")
 
     if min_rating is not None:
         df = df.filter(pl.col("Rating") >= min_rating)
     if max_rating is not None:
         df = df.filter(pl.col("Rating") <= max_rating)
 
-    results: Dict[str, List[dict]] = {}
-    for name, required in groups.items():
-        mask = pl.lit(True)
-        for tag in required:
-            mask &= pl.col("Themes").str.contains(tag)
-        subset = df.filter(mask).head(count)
-        results[name] = subset.to_dicts()
+    if column == "OpeningTags":
+        mask = (
+            pl.col(column)
+            .fill_null("")
+            .str.split(" ")
+            .list.contains(token)
+        )
+    else:
+        mask = pl.col(column).str.contains(token)
+
+    subset = df.filter(mask)
+
+    results: dict[str, list[dict[str, Any]]] = {}
+    for i in range(num_sets):
+        name = f"{token} #{i + 1}"
+        results[name] = subset.slice(i * count, count).to_dicts()
     return results
 
 
-def insert_puzzles(db: sqlite3.Connection, sets: Dict[str, List[dict]]) -> List[str]:
+def insert_puzzles(db: sqlite3.Connection, sets: dict[str, list[dict[str, Any]]]) -> list[str]:
     """Insert puzzles into the database and return SQL statements."""
-    sql: List[str] = []
+    sql: list[str] = []
     cur = db.cursor()
     cur.execute("SELECT COALESCE(MAX(id), 0) FROM puzzle_sets")
     next_set_id = cur.fetchone()[0] + 1
@@ -115,6 +114,17 @@ def main() -> None:
         help="Output SQL file with INSERT statements",
     )
     parser.add_argument(
+        "--token",
+        required=True,
+        help="Theme or opening tag used to select puzzles",
+    )
+    parser.add_argument(
+        "--sets",
+        type=int,
+        default=1,
+        help="Number of puzzle sets to generate (default: 1)",
+    )
+    parser.add_argument(
         "--count",
         type=int,
         default=100,
@@ -130,14 +140,22 @@ def main() -> None:
         type=int,
         help="Maximum puzzle rating",
     )
+    parser.add_argument(
+        "--column",
+        choices=["Themes", "OpeningTags"],
+        default="Themes",
+        help="CSV column used to build sets (default: Themes)",
+    )
     args = parser.parse_args()
 
     puzzles = parse_csv(
         args.csv,
-        THEME_GROUPS,
+        args.token,
+        num_sets=args.sets,
         count=args.count,
         min_rating=args.min_rating,
         max_rating=args.max_rating,
+        column=args.column,
     )
 
     with sqlite3.connect(args.db) as db:
@@ -147,7 +165,7 @@ def main() -> None:
         for stmt in statements:
             f.write(stmt + "\n")
 
-    print(f"Added {len(THEME_GROUPS)} puzzle sets to {args.db}.")
+    print(f"Added {args.sets} puzzle sets to {args.db}.")
     print(f"SQL statements written to {args.sql}.")
 
 
