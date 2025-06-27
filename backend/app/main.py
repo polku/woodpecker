@@ -41,6 +41,11 @@ def get_db():
 SESSIONS = {}
 LAST_RUNS = {}
 
+# Scoring constants
+POINTS_SOLVED_NO_HINT = 2
+POINTS_SOLVED_WITH_HINT = 1
+POINTS_FAILED = -1
+
 @app.get("/api/puzzle_sets", response_model=List[PuzzleSet])
 def list_puzzle_sets(db: Session = Depends(get_db)):
     results = (
@@ -152,7 +157,11 @@ def submit_move(session_id: str, move: MoveRequest):
         move_idx += 1
         next_move = None
         if move_idx == len(solution):
-            session["score"] += 2 if not session.get("hint_used") else 1
+            session["score"] += (
+                POINTS_SOLVED_NO_HINT
+                if not session.get("hint_used")
+                else POINTS_SOLVED_WITH_HINT
+            )
             session["index"] += 1
             session["move_index"] = 0
             session["hint_used"] = False
@@ -162,7 +171,11 @@ def submit_move(session_id: str, move: MoveRequest):
             next_move = solution[move_idx]
             move_idx += 1
             if move_idx == len(solution):
-                session["score"] += 2 if not session.get("hint_used") else 1
+                session["score"] += (
+                    POINTS_SOLVED_NO_HINT
+                    if not session.get("hint_used")
+                    else POINTS_SOLVED_WITH_HINT
+                )
                 session["index"] += 1
                 session["move_index"] = 0
                 session["hint_used"] = False
@@ -173,7 +186,7 @@ def submit_move(session_id: str, move: MoveRequest):
         return MoveResult(correct=True, puzzle_solved=puzzle_solved, score=session["score"], next_move=next_move)
     else:
         # Wrong answer: reveal solution and move to next puzzle
-        session["score"] -= 1
+        session["score"] += POINTS_FAILED
         session["index"] += 1
         session["move_index"] = 0
         session["hint_used"] = False
