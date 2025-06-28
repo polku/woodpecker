@@ -433,7 +433,10 @@ function App() {
                 ...highlightSquares.reduce(
                   (acc, sq) => ({
                     ...acc,
-                    [sq]: { boxShadow: 'inset 0 0 0 4px rgba(255,165,0,0.8)' }
+                    [sq]: {
+                      backgroundColor: 'rgba(255,165,0,0.4)',
+                      boxShadow: 'inset 0 0 0 2px rgba(255,165,0,0.7)'
+                    }
                   }),
                   {}
                 )
