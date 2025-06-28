@@ -3,6 +3,17 @@ import axios from 'axios';
 import { Chess } from 'chess.js';
 import { Chessboard } from 'react-chessboard';
 
+function formatDuration(seconds) {
+  const h = Math.floor(seconds / 3600);
+  const m = Math.floor((seconds % 3600) / 60);
+  const s = seconds % 60;
+  const parts = [];
+  if (h) parts.push(`${h}h`);
+  if (m || h) parts.push(`${m}m`);
+  parts.push(`${s}s`);
+  return parts.join(' ');
+}
+
 function ArrowOverlay({ move, boardWidth, orientation }) {
   if (!move) return null;
   const squareSize = boardWidth / 8;
@@ -302,7 +313,7 @@ function App() {
           <h2>Session Summary</h2>
           <p>Attempt: {summary.attempts}</p>
           <p>Score: {summary.score}</p>
-          <p>Time: {summary.elapsed_seconds}s</p>
+          <p>Time: {formatDuration(summary.elapsed_seconds)}</p>
           {summary.previous_score != null && (
             <p>
               Previous score: {summary.previous_score} ({scoreDiff >= 0 ? '+' : ''}
@@ -311,10 +322,9 @@ function App() {
           )}
           {summary.previous_elapsed_seconds != null && (
             <p>
-              Previous time: {summary.previous_elapsed_seconds}s ({timeDiff >= 0
-                ? '-'
-                : '+'}
-              {Math.abs(timeDiff)}s)
+              Previous time: {formatDuration(summary.previous_elapsed_seconds)} (
+              {timeDiff >= 0 ? '-' : '+'}
+              {formatDuration(Math.abs(timeDiff))})
             </p>
           )}
           {performances.length > 0 && (
@@ -338,7 +348,7 @@ function App() {
                       <td>{new Date(p.date).toISOString()}</td>
                       <td>{p.puzzle_set}</td>
                       <td>{p.score}</td>
-                      <td>{p.elapsed_seconds}s</td>
+                      <td>{formatDuration(p.elapsed_seconds)}</td>
                     </tr>
                   ))}
                 </tbody>
@@ -378,7 +388,7 @@ function App() {
                     <td>{new Date(p.date).toISOString()}</td>
                     <td>{p.puzzle_set}</td>
                     <td>{p.score}</td>
-                    <td>{p.elapsed_seconds}s</td>
+                    <td>{formatDuration(p.elapsed_seconds)}</td>
                   </tr>
                 ))}
               </tbody>
@@ -393,7 +403,7 @@ function App() {
     <div style={{ padding: '1rem', display: 'flex' }}>
       <div>
         <div style={{ marginBottom: '1rem' }}>
-          <span>Score: {score}</span> | <span>Time: {elapsed}s</span>
+          <span>Score: {score}</span> | <span>Time: {formatDuration(elapsed)}</span>
         </div>
         <div style={{ display: 'flex', alignItems: 'flex-start' }}>
           <div style={{ position: 'relative', width: boardWidth }}>
