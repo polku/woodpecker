@@ -188,6 +188,12 @@ function App() {
       }
   };
 
+  const ratePuzzle = async value => {
+    if (!puzzle) return;
+    await axios.post(`/api/puzzles/${puzzle.id}/rating`, { value });
+    await fetchNextPuzzle();
+  };
+
   const stepForward = () => {
     if (solutionIndex >= solutionMoves.length) return;
     const c = new Chess(chess.fen());
@@ -481,7 +487,8 @@ function App() {
               marginTop: '-1rem',
               display: 'flex',
               flexDirection: 'column',
-              alignItems: 'center'
+              alignItems: 'center',
+              width: boardWidth
             }}
           >
             <div
@@ -533,7 +540,49 @@ function App() {
               </>
             )}
             {(puzzleSolved || showSolution) && (
-              <button onClick={fetchNextPuzzle} style={{ marginTop: '1rem' }}>Next Puzzle</button>
+              <div
+                style={{
+                  marginTop: '1rem',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  alignItems: 'center',
+                  width: '80%'
+                }}
+              >
+                <button
+                  onClick={fetchNextPuzzle}
+                  style={{
+                    marginBottom: '0.5rem',
+                    width: '100%',
+                    backgroundColor: '#87cefa',
+                    color: 'white',
+                    fontSize: '1.1rem',
+                    padding: '1rem 0.5rem'
+                  }}
+                >
+                  Next Puzzle
+                </button>
+                <div style={{ display: 'flex', width: '100%' }}>
+                  <button
+                    onClick={() => ratePuzzle(1)}
+                    style={{ flex: 1, backgroundColor: '#90ee90', color: 'black', padding: '1rem 0.5rem' }}
+                  >
+                    Like
+                  </button>
+                  <button
+                    onClick={() => ratePuzzle(-1)}
+                    style={{
+                      flex: 1,
+                      marginLeft: '0.5rem',
+                      backgroundColor: '#f08080',
+                      color: 'black',
+                      padding: '1rem 0.5rem'
+                    }}
+                  >
+                    Dislike
+                  </button>
+                </div>
+              </div>
             )}
           </div>
         </div>

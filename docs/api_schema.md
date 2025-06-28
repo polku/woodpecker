@@ -141,6 +141,20 @@ List stored session performances ordered from newest to oldest.
 ]
 ```
 
+### `POST /api/puzzles/{puzzle_id}/rating`
+Adjust the rating score of a puzzle. Positive values increase the rating while
+negative values decrease it.
+
+**Request body**
+```json
+{"value": 1}
+```
+
+`value` must be `1` or `-1`.
+
+**Response 204**
+
+
 ## Notes
 - All timestamps use ISO 8601 format (UTC).
 - Moves are in UCI format (`e2e4`). The frontend should convert from chessboard clicks to this format.

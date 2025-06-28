@@ -260,3 +260,17 @@ def list_performances(db: Session = Depends(get_db)):
         )
         for r in records
     ]
+
+
+@app.post("/api/puzzles/{puzzle_id}/rating", status_code=204)
+def rate_puzzle(puzzle_id: int, data: dict, db: Session = Depends(get_db)):
+    """Increase or decrease the rating of a puzzle."""
+    value = data.get("value")
+    if value not in (1, -1):
+        raise HTTPException(status_code=400, detail="value must be 1 or -1")
+    puzzle = db.query(PuzzleDB).filter(PuzzleDB.id == puzzle_id).first()
+    if not puzzle:
+        raise HTTPException(status_code=404, detail="puzzle not found")
+    puzzle.rating = (puzzle.rating or 0) + value
+    db.commit()
+    return
