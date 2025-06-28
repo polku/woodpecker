@@ -499,7 +499,13 @@ function App() {
               </>
             )}
             {(puzzleSolved || showSolution) && (
-              <button onClick={fetchNextPuzzle} style={{ marginTop: '1rem' }}>Next Puzzle</button>
+              <button
+                onClick={fetchNextPuzzle}
+                className="next-puzzle-button"
+                style={{ marginTop: '1rem' }}
+              >
+                Next Puzzle
+              </button>
             )}
           </div>
         </div>

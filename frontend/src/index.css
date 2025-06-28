@@ -51,3 +51,8 @@ table.performance-table {
 .performance-table th {
   background-color: #222;
 }
+
+.next-puzzle-button {
+  font-size: 3rem;
+  padding: 1.5rem 3rem;
+}
