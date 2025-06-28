@@ -153,7 +153,7 @@ def submit_move(session_id: str, move: MoveRequest):
     move_idx = session.get("move_index", 0)
     expected = solution[move_idx]
 
-    if move.move == expected:
+    if move.move.lower() == expected.lower():
         move_idx += 1
         next_move = None
         if move_idx == len(solution):
