@@ -51,3 +51,4 @@ class PuzzleDB(Base):
     id = Column(Integer, primary_key=True)
     fen = Column(String, nullable=False)
     moves = Column(String, nullable=False)
+    rating = Column(Integer, nullable=False, default=0)
