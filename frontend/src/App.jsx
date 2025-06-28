@@ -235,14 +235,18 @@ function App() {
     return () => window.removeEventListener("keydown", handleEnter);
   }, [puzzleSolved, showSolution]);
 
-  const onDrop = async (sourceSquare, targetSquare) => {
+  const onDrop = async (sourceSquare, targetSquare, piece) => {
+    // Attempt the move, auto-promoting to a queen if necessary. The returned
+    // object will contain the promotion piece so we can send the full move
+    // (including promotion) to the backend.
     const move = chess.move({ from: sourceSquare, to: targetSquare, promotion: 'q' });
     if (move === null) return false;
     setChess(new Chess(chess.fen()));
     setLastMove({ from: sourceSquare, to: targetSquare });
     setHintSquare(null);
 
-    const res = await axios.post(`/api/sessions/${session}/move`, { move: `${sourceSquare}${targetSquare}` });
+    const promotion = move.promotion ? move.promotion : '';
+    const res = await axios.post(`/api/sessions/${session}/move`, { move: `${sourceSquare}${targetSquare}${promotion}` });
     setScore(res.data.score);
 
     if (!res.data.correct) {
