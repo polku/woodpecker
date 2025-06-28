@@ -512,7 +512,7 @@ function App() {
                   display: 'flex',
                   flexDirection: 'column',
                   alignItems: 'center',
-                  width: '100%'
+                  width: '80%'
                 }}
               >
                 <button
@@ -520,10 +520,10 @@ function App() {
                   style={{
                     marginBottom: '0.5rem',
                     width: '100%',
-                    backgroundColor: 'blue',
+                    backgroundColor: '#87cefa',
                     color: 'white',
                     fontSize: '1.1rem',
-                    padding: '0.5rem 1rem'
+                    padding: '1rem 0.5rem'
                   }}
                 >
                   Next Puzzle
@@ -531,7 +531,7 @@ function App() {
                 <div style={{ display: 'flex', width: '100%' }}>
                   <button
                     onClick={() => ratePuzzle(1)}
-                    style={{ flex: 1, backgroundColor: 'green', color: 'white', padding: '0.5rem 1rem' }}
+                    style={{ flex: 1, backgroundColor: '#90ee90', color: 'black', padding: '1rem 0.5rem' }}
                   >
                     Like
                   </button>
@@ -540,9 +540,9 @@ function App() {
                     style={{
                       flex: 1,
                       marginLeft: '0.5rem',
-                      backgroundColor: 'red',
-                      color: 'white',
-                      padding: '0.5rem 1rem'
+                      backgroundColor: '#f08080',
+                      color: 'black',
+                      padding: '1rem 0.5rem'
                     }}
                   >
                     Dislike
