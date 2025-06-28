@@ -453,7 +453,8 @@ function App() {
               marginTop: '-1rem',
               display: 'flex',
               flexDirection: 'column',
-              alignItems: 'center'
+              alignItems: 'center',
+              width: boardWidth
             }}
           >
             <div
@@ -505,11 +506,47 @@ function App() {
               </>
             )}
             {(puzzleSolved || showSolution) && (
-              <div style={{ marginTop: '1rem', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-                <button onClick={fetchNextPuzzle} style={{ marginBottom: '0.5rem' }}>Next Puzzle</button>
-                <div>
-                  <button onClick={() => ratePuzzle(1)}>Like</button>
-                  <button onClick={() => ratePuzzle(-1)} style={{ marginLeft: '0.5rem' }}>Dislike</button>
+              <div
+                style={{
+                  marginTop: '1rem',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  alignItems: 'center',
+                  width: '100%'
+                }}
+              >
+                <button
+                  onClick={fetchNextPuzzle}
+                  style={{
+                    marginBottom: '0.5rem',
+                    width: '100%',
+                    backgroundColor: 'blue',
+                    color: 'white',
+                    fontSize: '1.1rem',
+                    padding: '0.5rem 1rem'
+                  }}
+                >
+                  Next Puzzle
+                </button>
+                <div style={{ display: 'flex', width: '100%' }}>
+                  <button
+                    onClick={() => ratePuzzle(1)}
+                    style={{ flex: 1, backgroundColor: 'green', color: 'white', padding: '0.5rem 1rem' }}
+                  >
+                    Like
+                  </button>
+                  <button
+                    onClick={() => ratePuzzle(-1)}
+                    style={{
+                      flex: 1,
+                      marginLeft: '0.5rem',
+                      backgroundColor: 'red',
+                      color: 'white',
+                      padding: '0.5rem 1rem'
+                    }}
+                  >
+                    Dislike
+                  </button>
                 </div>
               </div>
             )}
