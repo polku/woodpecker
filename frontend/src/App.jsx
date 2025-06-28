@@ -66,6 +66,7 @@ function App() {
   const [puzzleIndex, setPuzzleIndex] = useState(1);
   const [hintSquare, setHintSquare] = useState(null);
   const [hintUsed, setHintUsed] = useState(false);
+  const [highlightSquares, setHighlightSquares] = useState([]);
   const progressPercent = setSize > 0 ? ((puzzleIndex - 1) / setSize) * 100 : 0;
 
   // After loading a puzzle we automatically play the first move from the
@@ -128,6 +129,7 @@ function App() {
     setPuzzleSolved(false);
     setLastMove(null);
     setIncorrect(false);
+    setHighlightSquares([]);
     if (res.data.puzzle.initial_move) {
       const moveStr = res.data.puzzle.initial_move;
       setTimeout(() => {
@@ -144,6 +146,7 @@ function App() {
     setIncorrect(false);
     setHintSquare(null);
     setHintUsed(false);
+    setHighlightSquares([]);
     const res = await axios.get(`/api/sessions/${session}/puzzle`);
     if (res.data) {
       setPuzzleIndex(i => i + 1);
@@ -213,6 +216,12 @@ function App() {
     const res = await axios.get(`/api/sessions/${session}/hint`);
     setHintSquare(res.data.square);
     setHintUsed(true);
+  };
+
+  const onSquareRightClick = square => {
+    setHighlightSquares(sqs =>
+      sqs.includes(square) ? sqs.filter(s => s !== square) : [...sqs, square]
+    );
   };
 
   useEffect(() => {
@@ -420,8 +429,16 @@ function App() {
                         boxShadow: 'inset 0 0 0 4px rgba(0,0,255,0.6)'
                       }
                     }
-                  : {})
+                  : {}),
+                ...highlightSquares.reduce(
+                  (acc, sq) => ({
+                    ...acc,
+                    [sq]: { boxShadow: 'inset 0 0 0 4px rgba(255,165,0,0.8)' }
+                  }),
+                  {}
+                )
               }}
+              onSquareRightClick={onSquareRightClick}
             />
             {showSolution && (
               <ArrowOverlay
