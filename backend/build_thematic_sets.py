@@ -82,12 +82,12 @@ def insert_puzzles(db: sqlite3.Connection, sets: dict[str, list[dict[str, Any]]]
             fen = row["FEN"]
             moves = row["Moves"]
             cur.execute(
-                "INSERT INTO puzzles (id, fen, moves) VALUES (?, ?, ?)",
+                "INSERT INTO puzzles (id, fen, moves, rating) VALUES (?, ?, ?, 0)",
                 (pid, fen, moves),
             )
             sql.append(
-                f"INSERT INTO puzzles (id, fen, moves) VALUES ({pid}, "
-                f"'{fen.replace("'", "''")}', '{moves}');"
+                f"INSERT INTO puzzles (id, fen, moves, rating) VALUES ({pid}, "
+                f"'{fen.replace("'", "''")}', '{moves}', 0);"
             )
             cur.execute(
                 "INSERT INTO puzzle_set_puzzles (puzzle_set_id, puzzle_id) VALUES (?, ?)",

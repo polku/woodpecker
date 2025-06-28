@@ -174,6 +174,12 @@ function App() {
       }
   };
 
+  const ratePuzzle = async value => {
+    if (!puzzle) return;
+    await axios.post(`/api/puzzles/${puzzle.id}/rating`, { value });
+    await fetchNextPuzzle();
+  };
+
   const stepForward = () => {
     if (solutionIndex >= solutionMoves.length) return;
     const c = new Chess(chess.fen());
@@ -499,7 +505,13 @@ function App() {
               </>
             )}
             {(puzzleSolved || showSolution) && (
-              <button onClick={fetchNextPuzzle} style={{ marginTop: '1rem' }}>Next Puzzle</button>
+              <div style={{ marginTop: '1rem', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+                <button onClick={fetchNextPuzzle} style={{ marginBottom: '0.5rem' }}>Next Puzzle</button>
+                <div>
+                  <button onClick={() => ratePuzzle(1)}>Like</button>
+                  <button onClick={() => ratePuzzle(-1)} style={{ marginLeft: '0.5rem' }}>Dislike</button>
+                </div>
+              </div>
             )}
           </div>
         </div>
