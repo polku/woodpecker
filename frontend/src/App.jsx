@@ -78,7 +78,20 @@ function App() {
   const [hintSquare, setHintSquare] = useState(null);
   const [hintUsed, setHintUsed] = useState(false);
   const [highlightSquares, setHighlightSquares] = useState([]);
+  const [error, setError] = useState(null);
+  const [loading, setLoading] = useState(false);
+  const [isStartingSession, setIsStartingSession] = useState(false);
+  const [isLoadingNextPuzzle, setIsLoadingNextPuzzle] = useState(false);
   const progressPercent = setSize > 0 ? ((puzzleIndex - 1) / setSize) * 100 : 0;
+
+  // Helper function to handle API errors
+  const handleApiError = (err, context) => {
+    console.error(`Error in ${context}:`, err);
+    const message = err.response?.data?.detail || err.message || 'An unexpected error occurred';
+    setError(`${context}: ${message}`);
+    // Auto-dismiss error after 5 seconds
+    setTimeout(() => setError(null), 5000);
+  };
 
   // After loading a puzzle we automatically play the first move from the
   // solution. Orientation should therefore be for the side that moves second.
@@ -103,7 +116,18 @@ function App() {
 
   // Fetch puzzle sets on load
   useEffect(() => {
-    axios.get('/api/puzzle_sets').then(r => setPuzzleSets(r.data));
+    const fetchPuzzleSets = async () => {
+      try {
+        setLoading(true);
+        const res = await axios.get('/api/puzzle_sets');
+        setPuzzleSets(res.data);
+      } catch (err) {
+        handleApiError(err, 'Failed to load puzzle sets');
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchPuzzleSets();
   }, []);
 
   // Timer
@@ -117,61 +141,43 @@ function App() {
 
   // Fetch past performances on load and whenever the summary changes
   useEffect(() => {
-    axios.get('/api/performances').then(r => setPerformances(r.data));
+    const fetchPerformances = async () => {
+      try {
+        const res = await axios.get('/api/performances');
+        setPerformances(res.data);
+      } catch (err) {
+        handleApiError(err, 'Failed to load performances');
+      }
+    };
+    fetchPerformances();
   }, [summary]);
 
   const startSession = async () => {
-    const res = await axios.post('/api/sessions', { puzzle_set_id: parseInt(selectedSet) });
-    const currentSet = puzzleSets.find(ps => ps.id === parseInt(selectedSet));
-    if (currentSet && currentSet.size) {
-      setSetSize(currentSet.size);
-    } else {
-      setSetSize(0);
-    }
-    setPuzzleIndex(1);
-    setSession(res.data.id);
-    setPuzzle(res.data.puzzle);
-    setScore(res.data.score);
-    setElapsed(res.data.elapsed_seconds);
-    const baseFen = res.data.puzzle.fen;
-    const c = new Chess(baseFen);
-    setChess(c);
-    setBoardOrientation(orientationFromFen(baseFen));
-    setPuzzleSolved(false);
-    setLastMove(null);
-    setIncorrect(false);
-    setHighlightSquares([]);
-    if (res.data.puzzle.initial_move) {
-      const moveStr = res.data.puzzle.initial_move;
-      setTimeout(() => {
-        const c2 = new Chess(baseFen);
-        c2.move(moveStr);
-        setChess(c2);
-        setLastMove({ from: moveStr.slice(0, 2), to: moveStr.slice(2, 4) });
-      }, 500);
-    }
-  };
-
-  const fetchNextPuzzle = async () => {
-    setPuzzleSolved(false);
-    setIncorrect(false);
-    setHintSquare(null);
-    setHintUsed(false);
-    setHighlightSquares([]);
-    const res = await axios.get(`/api/sessions/${session}/puzzle`);
-    if (res.data) {
-      setPuzzleIndex(i => i + 1);
-      setPuzzle(res.data);
-      const baseFen = res.data.fen;
+    try {
+      setIsStartingSession(true);
+      setError(null);
+      const res = await axios.post('/api/sessions', { puzzle_set_id: parseInt(selectedSet) });
+      const currentSet = puzzleSets.find(ps => ps.id === parseInt(selectedSet));
+      if (currentSet && currentSet.size) {
+        setSetSize(currentSet.size);
+      } else {
+        setSetSize(0);
+      }
+      setPuzzleIndex(1);
+      setSession(res.data.id);
+      setPuzzle(res.data.puzzle);
+      setScore(res.data.score);
+      setElapsed(res.data.elapsed_seconds);
+      const baseFen = res.data.puzzle.fen;
       const c = new Chess(baseFen);
       setChess(c);
       setBoardOrientation(orientationFromFen(baseFen));
-      setShowSolution(false);
-      setSolutionMoves([]);
-      setSolutionIndex(0);
+      setPuzzleSolved(false);
       setLastMove(null);
-      if (res.data.initial_move) {
-        const moveStr = res.data.initial_move;
+      setIncorrect(false);
+      setHighlightSquares([]);
+      if (res.data.puzzle.initial_move) {
+        const moveStr = res.data.puzzle.initial_move;
         setTimeout(() => {
           const c2 = new Chess(baseFen);
           c2.move(moveStr);
@@ -179,6 +185,43 @@ function App() {
           setLastMove({ from: moveStr.slice(0, 2), to: moveStr.slice(2, 4) });
         }, 500);
       }
+    } catch (err) {
+      handleApiError(err, 'Failed to start session');
+    } finally {
+      setIsStartingSession(false);
+    }
+  };
+
+  const fetchNextPuzzle = async () => {
+    try {
+      setIsLoadingNextPuzzle(true);
+      setError(null);
+      setPuzzleSolved(false);
+      setIncorrect(false);
+      setHintSquare(null);
+      setHintUsed(false);
+      setHighlightSquares([]);
+      const res = await axios.get(`/api/sessions/${session}/puzzle`);
+      if (res.data) {
+        setPuzzleIndex(i => i + 1);
+        setPuzzle(res.data);
+        const baseFen = res.data.fen;
+        const c = new Chess(baseFen);
+        setChess(c);
+        setBoardOrientation(orientationFromFen(baseFen));
+        setShowSolution(false);
+        setSolutionMoves([]);
+        setSolutionIndex(0);
+        setLastMove(null);
+        if (res.data.initial_move) {
+          const moveStr = res.data.initial_move;
+          setTimeout(() => {
+            const c2 = new Chess(baseFen);
+            c2.move(moveStr);
+            setChess(c2);
+            setLastMove({ from: moveStr.slice(0, 2), to: moveStr.slice(2, 4) });
+          }, 500);
+        }
       } else {
         const summaryRes = await axios.get(`/api/sessions/${session}/summary`);
         setSummary(summaryRes.data);
@@ -186,12 +229,22 @@ function App() {
         setPerformances(perfRes.data);
         clearInterval(timerId);
       }
+    } catch (err) {
+      handleApiError(err, 'Failed to load next puzzle');
+    } finally {
+      setIsLoadingNextPuzzle(false);
+    }
   };
 
   const ratePuzzle = async value => {
     if (!puzzle) return;
-    await axios.post(`/api/puzzles/${puzzle.id}/rating`, { value });
-    await fetchNextPuzzle();
+    try {
+      setError(null);
+      await axios.post(`/api/puzzles/${puzzle.id}/rating`, { value });
+      await fetchNextPuzzle();
+    } catch (err) {
+      handleApiError(err, 'Failed to rate puzzle');
+    }
   };
 
   const stepForward = () => {
@@ -230,9 +283,14 @@ function App() {
 
   const requestHint = async () => {
     if (hintUsed) return;
-    const res = await axios.get(`/api/sessions/${session}/hint`);
-    setHintSquare(res.data.square);
-    setHintUsed(true);
+    try {
+      setError(null);
+      const res = await axios.get(`/api/sessions/${session}/hint`);
+      setHintSquare(res.data.square);
+      setHintUsed(true);
+    } catch (err) {
+      handleApiError(err, 'Failed to get hint');
+    }
   };
 
   const onSquareRightClick = square => {
@@ -271,50 +329,58 @@ function App() {
     setLastMove({ from: sourceSquare, to: targetSquare });
     setHintSquare(null);
 
-    const promotion = move.promotion ? move.promotion : '';
-    const res = await axios.post(`/api/sessions/${session}/move`, { move: `${sourceSquare}${targetSquare}${promotion}` });
-    setScore(res.data.score);
+    try {
+      setError(null);
+      const promotion = move.promotion ? move.promotion : '';
+      const res = await axios.post(`/api/sessions/${session}/move`, { move: `${sourceSquare}${targetSquare}${promotion}` });
+      setScore(res.data.score);
 
-    if (!res.data.correct) {
-      setIncorrect(true);
-      if (res.data.solution) {
-        setShowSolution(true);
-        let moves = res.data.solution;
-        if (puzzle.initial_move && moves[0] === puzzle.initial_move) {
-          moves = moves.slice(1);
-        }
-        setSolutionMoves(moves);
-        setSolutionIndex(0);
-        const startFen = puzzleStartFen(puzzle);
-        setChess(new Chess(startFen));
-        if (puzzle.initial_move) {
-          setLastMove({
-            from: puzzle.initial_move.slice(0, 2),
-            to: puzzle.initial_move.slice(2, 4)
-          });
+      if (!res.data.correct) {
+        setIncorrect(true);
+        if (res.data.solution) {
+          setShowSolution(true);
+          let moves = res.data.solution;
+          if (puzzle.initial_move && moves[0] === puzzle.initial_move) {
+            moves = moves.slice(1);
+          }
+          setSolutionMoves(moves);
+          setSolutionIndex(0);
+          const startFen = puzzleStartFen(puzzle);
+          setChess(new Chess(startFen));
+          if (puzzle.initial_move) {
+            setLastMove({
+              from: puzzle.initial_move.slice(0, 2),
+              to: puzzle.initial_move.slice(2, 4)
+            });
+          } else {
+            setLastMove(null);
+          }
         } else {
-          setLastMove(null);
+          await fetchNextPuzzle();
         }
-      } else {
-        await fetchNextPuzzle();
+        return true;
       }
+
+      setIncorrect(false);
+
+      if (res.data.next_move) {
+        const c = new Chess(chess.fen());
+        c.move(res.data.next_move);
+        setChess(c);
+        setLastMove({ from: res.data.next_move.slice(0, 2), to: res.data.next_move.slice(2, 4) });
+      }
+
+      if (res.data.puzzle_solved) {
+        setPuzzleSolved(true);
+      }
+
       return true;
+    } catch (err) {
+      handleApiError(err, 'Failed to submit move');
+      // Revert the move on error
+      setChess(new Chess(chess.fen()));
+      return false;
     }
-
-    setIncorrect(false);
-
-    if (res.data.next_move) {
-      const c = new Chess(chess.fen());
-      c.move(res.data.next_move);
-      setChess(c);
-      setLastMove({ from: res.data.next_move.slice(0, 2), to: res.data.next_move.slice(2, 4) });
-    }
-
-    if (res.data.puzzle_solved) {
-      setPuzzleSolved(true);
-    }
-
-    return true;
   };
 
   if (summary) {
@@ -329,6 +395,31 @@ function App() {
         : null;
       return (
         <div style={{ padding: '1rem' }}>
+          {error && (
+            <div style={{
+              backgroundColor: '#ff4444',
+              color: 'white',
+              padding: '1rem',
+              marginBottom: '1rem',
+              borderRadius: '4px',
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center'
+            }}>
+              <span>{error}</span>
+              <button
+                onClick={() => setError(null)}
+                style={{
+                  background: 'transparent',
+                  border: 'none',
+                  color: 'white',
+                  cursor: 'pointer',
+                  fontSize: '1.2rem',
+                  padding: '0 0.5rem'
+                }}
+              >×</button>
+            </div>
+          )}
           <h2>Session Summary</h2>
           <p>Attempt: {summary.attempts}</p>
           <p>Score: {summary.score}</p>
@@ -381,14 +472,47 @@ function App() {
   if (!session) {
     return (
       <div style={{ padding: '1rem' }}>
+        {error && (
+          <div style={{
+            backgroundColor: '#ff4444',
+            color: 'white',
+            padding: '1rem',
+            marginBottom: '1rem',
+            borderRadius: '4px',
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center'
+          }}>
+            <span>{error}</span>
+            <button
+              onClick={() => setError(null)}
+              style={{
+                background: 'transparent',
+                border: 'none',
+                color: 'white',
+                cursor: 'pointer',
+                fontSize: '1.2rem',
+                padding: '0 0.5rem'
+              }}
+            >×</button>
+          </div>
+        )}
         <h1>Woodpecker Training</h1>
-        <select value={selectedSet} onChange={e => setSelectedSet(e.target.value)}>
-          <option value="">Select puzzle set</option>
-          {puzzleSets.map(ps => (
-            <option key={ps.id} value={ps.id}>{ps.name}</option>
-          ))}
-        </select>
-        <button onClick={startSession} disabled={!selectedSet}>Start</button>
+        {loading ? (
+          <p>Loading puzzle sets...</p>
+        ) : (
+          <>
+            <select value={selectedSet} onChange={e => setSelectedSet(e.target.value)}>
+              <option value="">Select puzzle set</option>
+              {puzzleSets.map(ps => (
+                <option key={ps.id} value={ps.id}>{ps.name}</option>
+              ))}
+            </select>
+            <button onClick={startSession} disabled={!selectedSet || isStartingSession}>
+              {isStartingSession ? 'Starting...' : 'Start'}
+            </button>
+          </>
+        )}
         {performances.length > 0 && (
           <div style={{ marginTop: '1rem' }}>
             <h3>Past Performances</h3>
@@ -419,11 +543,37 @@ function App() {
   }
 
   return (
-    <div style={{ padding: '1rem', display: 'flex' }}>
-      <div>
-        <div style={{ marginBottom: '1rem' }}>
-          <span>Score: {score}</span> | <span>Time: {formatDuration(elapsed)}</span>
+    <div style={{ padding: '1rem' }}>
+      {error && (
+        <div style={{
+          backgroundColor: '#ff4444',
+          color: 'white',
+          padding: '1rem',
+          marginBottom: '1rem',
+          borderRadius: '4px',
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center'
+        }}>
+          <span>{error}</span>
+          <button
+            onClick={() => setError(null)}
+            style={{
+              background: 'transparent',
+              border: 'none',
+              color: 'white',
+              cursor: 'pointer',
+              fontSize: '1.2rem',
+              padding: '0 0.5rem'
+            }}
+          >×</button>
         </div>
+      )}
+      <div style={{ display: 'flex' }}>
+        <div>
+          <div style={{ marginBottom: '1rem' }}>
+            <span>Score: {score}</span> | <span>Time: {formatDuration(elapsed)}</span>
+          </div>
         <div style={{ display: 'flex', alignItems: 'flex-start' }}>
           <div style={{ position: 'relative', width: boardWidth }}>
             <Chessboard
@@ -551,32 +701,43 @@ function App() {
               >
                 <button
                   onClick={fetchNextPuzzle}
+                  disabled={isLoadingNextPuzzle}
                   style={{
                     marginBottom: '0.5rem',
                     width: '100%',
-                    backgroundColor: '#87cefa',
+                    backgroundColor: isLoadingNextPuzzle ? '#cccccc' : '#87cefa',
                     color: 'white',
                     fontSize: '1.1rem',
-                    padding: '1rem 0.5rem'
+                    padding: '1rem 0.5rem',
+                    cursor: isLoadingNextPuzzle ? 'not-allowed' : 'pointer'
                   }}
                 >
-                  Next Puzzle
+                  {isLoadingNextPuzzle ? 'Loading...' : 'Next Puzzle'}
                 </button>
                 <div style={{ display: 'flex', width: '100%' }}>
                   <button
                     onClick={() => ratePuzzle(1)}
-                    style={{ flex: 1, backgroundColor: '#90ee90', color: 'black', padding: '1rem 0.5rem' }}
+                    disabled={isLoadingNextPuzzle}
+                    style={{
+                      flex: 1,
+                      backgroundColor: isLoadingNextPuzzle ? '#cccccc' : '#90ee90',
+                      color: 'black',
+                      padding: '1rem 0.5rem',
+                      cursor: isLoadingNextPuzzle ? 'not-allowed' : 'pointer'
+                    }}
                   >
                     Like
                   </button>
                   <button
                     onClick={() => ratePuzzle(-1)}
+                    disabled={isLoadingNextPuzzle}
                     style={{
                       flex: 1,
                       marginLeft: '0.5rem',
-                      backgroundColor: '#f08080',
+                      backgroundColor: isLoadingNextPuzzle ? '#cccccc' : '#f08080',
                       color: 'black',
-                      padding: '1rem 0.5rem'
+                      padding: '1rem 0.5rem',
+                      cursor: isLoadingNextPuzzle ? 'not-allowed' : 'pointer'
                     }}
                   >
                     Dislike
